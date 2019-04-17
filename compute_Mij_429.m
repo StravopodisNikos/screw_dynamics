@@ -1,4 +1,4 @@
-function [Mij_429,delta_Mij_thetak_429,Cij_429a] = compute_Mij_429(xi_ai, exp_ai, Pi1, Mi_s, theta_dot)
+function [Mij_429,delta_Mij_thetak_429,Cij_429a] = compute_Mij_429(xi_ai, exp_ai, Pi1, gsli0, Mi_b, theta_dot)
 % Computes Manipulator Inertia Matrix based on eq.4.29a p.176
 
 % l = max(i,j);
@@ -16,7 +16,9 @@ for c_i=1:i
         for add=l:n_Dof
             [Aij_1] = compute_Aij_for_Ji_427(exp_ai, Pi1, add, c_i);
             [Aij_2] = compute_Aij_for_Ji_427(exp_ai, Pi1, add, c_j);
-            Mij_429(c_i,c_j) = Mij_429(c_i,c_j) + xi_ai(:,c_i)'*Aij_1'*Mi_s(:,:,add)'*Aij_2*xi_ai(:,c_j);
+            
+            Ml = ad(inv(gsli0(:,:,add)))'*Mi_b(:,:,add)*ad(inv(gsli0(:,:,add)));
+            Mij_429(c_i,c_j) = Mij_429(c_i,c_j) + xi_ai(:,c_i)'*Aij_1'*Ml*Aij_2*xi_ai(:,c_j);
         end
         
         % Compute  δ(Mij)/δ(θk) for all θk for each Mij
@@ -24,12 +26,12 @@ for c_i=1:i
         delta_Mik_thetaj_429 = zeros(2);
         delta_Mkj_thetai_429 = zeros(2);
         for k=1:n_Dof
-            [delta_Mij_thetak_429(:,:,k)] = compute_delta_Mij_thetak_429(xi_ai, exp_ai, Pi1, Mi_s, k);
+            [delta_Mij_thetak_429(:,:,k)] = compute_delta_Mij_thetak_429(xi_ai, exp_ai, Pi1, gsli0, Mi_b, k);
             if k == c_j
-                [delta_Mik_thetaj_429] = compute_delta_Mij_thetak_429(xi_ai, exp_ai, Pi1, Mi_s, k);
+                [delta_Mik_thetaj_429] = compute_delta_Mij_thetak_429(xi_ai, exp_ai, Pi1, gsli0, Mi_b, k);
             end
             if k == c_i
-                [delta_Mkj_thetai_429] = compute_delta_Mij_thetak_429(xi_ai, exp_ai, Pi1, Mi_s, k);
+                [delta_Mkj_thetai_429] = compute_delta_Mij_thetak_429(xi_ai, exp_ai, Pi1, gsli0, Mi_b, k);
             end
             Cij_429(c_i,c_j) = Cij_429(c_i,c_j) + 0.5*(delta_Mij_thetak_429(c_i,c_j)+delta_Mik_thetaj_429(c_i,c_j)-delta_Mkj_thetai_429(c_i,c_j))*theta_dot(k);
         end

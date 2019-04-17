@@ -1,4 +1,4 @@
-function [delta_Mij_thetak_429] = compute_delta_Mij_thetak_429(xi_ai, exp_ai, Pi1, Mi_s, k)
+function [delta_Mij_thetak_429] = compute_delta_Mij_thetak_429(xi_ai, exp_ai, Pi1, gsli0, Mi_b, k)
 % Computes Manipulator Inertia Matrix based on eq.4.29a p.176
 
 % l = max(i,j);
@@ -20,7 +20,9 @@ for c_i=1:i
             [Akj] = compute_Aij_for_Ji_427(exp_ai, Pi1, k, c_j);
             Lie_Br_2 = liebracket_426(Akj*xi_ai(:,c_j), xi_ai(:,k));
             
-            delta_Mij_thetak_429(c_i,c_j) = delta_Mij_thetak_429(c_i,c_j) + (Lie_Br_1'*Alk'*Mi_s(:,:,add)'*Alj*xi_ai(:,c_j) + xi_ai(:,c_i)'*Ali'*Mi_s(:,:,add)'*Alk*Lie_Br_2);
+            Ml = ad(inv(gsli0(:,:,add)))'*Mi_b(:,:,add)*ad(inv(gsli0(:,:,add)));
+            
+            delta_Mij_thetak_429(c_i,c_j) = delta_Mij_thetak_429(c_i,c_j) + (Lie_Br_1'*Alk'*Ml*Alj*xi_ai(:,c_j) + xi_ai(:,c_i)'*Ali'*Ml*Alk*Lie_Br_2);
         end
         
     end

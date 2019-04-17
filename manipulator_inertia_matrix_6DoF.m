@@ -1,4 +1,4 @@
-function [M,M_POE,deltaM_thetak,C_POE] = manipulator_inertia_matrix_6DoF(xi_ai, exp_ai, Pi, Mi, Mi_s, Ji, theta_dot)
+function [M_s, M_b, M_POE,deltaM_thetak,C_POE] = manipulator_inertia_matrix_6DoF(xi_ai, exp_ai, Pi, gsli0, Mi_b, Mi_s, Jis, Jib, theta_dot)
 % Computes Manipulator Inertia Matrix based on eq.4.19 p.168 Murray
 
 % Mi is generalized Inertia matrix of i-th link expressed in link reference frame - 6x6 x2 (number of links)
@@ -6,17 +6,22 @@ function [M,M_POE,deltaM_thetak,C_POE] = manipulator_inertia_matrix_6DoF(xi_ai, 
 
 % Ji is Body Jacobian of CoM - 6x2 x2
 
-n_Dof = size(Ji,2); % extract number of links
+n_Dof = size(Jis,2); % extract number of links
 
 % Computes manipulator inertia matrix based on eq.4.19 p.168 Murray
-M = zeros(n_Dof); % memory preallocation
+M_s = zeros(n_Dof); % memory preallocation
+M_b = zeros(n_Dof); % memory preallocation
 
 for i = 1:n_Dof
-    M = M + Ji(:,:,i)'*Mi(:,:,i)*Ji(:,:,i);
+    M_s = M_s + Jis(:,:,i)'*Mi_s(:,:,i)*Jis(:,:,i);
+end
+
+for i = 1:n_Dof
+    M_b = M_b + Jib(:,:,i)'*Mi_b(:,:,i)*Jib(:,:,i);
 end
 
 % Computes manipulator inertia matrix based on eq.4.29a p.176 Murray
 tic
-[M_POE,deltaM_thetak,C_POE] = compute_Mij_429_6DoF(xi_ai, exp_ai, Pi, Mi_s, theta_dot);
+[M_POE,deltaM_thetak,C_POE] = compute_Mij_429_6DoF(xi_ai, exp_ai, Pi, gsli0, Mi_b, theta_dot);
 toc
 end

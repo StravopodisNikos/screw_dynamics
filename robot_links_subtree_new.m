@@ -94,13 +94,14 @@ for j=1:nDoF % for all links of robot
         Mass_bj = mass_bj.*eye(3);
         M_bj = [Mass_bj zeros(3); zeros(3) I_bj]; % Generalized Inertia Matrix in blue frame-reference frame of every object defined in urdf
 
-        g_sbj = getTransform(robot,config,char(robot_links(j).BodyNames(body_counter(j)))); % Get tf of body object in spatial frame
-        g_bjli0 = inv(g_sbj)*gsli0(:,:,j); % get tf of CoM of link to body object frame
+%         g_sbj = getTransform(robot,config,char(robot_links(j).BodyNames(body_counter(j)))); % Get tf of body object in spatial frame
+%         g_bjli0 = inv(g_sbj)*gsli0(:,:,j); % get tf of CoM of link to body object frame
         
-        [M_CoM_bj] = transformed_inertia_matrix(M_bj,g_bjli0); % Generalized Inertia Matrix in CoM frame of the link, for each body inside the link
-% %         [M_CoM_bj] = transformed_inertia_matrix(M_bj,g_sbj); % Generalized Inertia Matrix of the link, fin spatial
-
-        M_CoM(:,:,j) = M_CoM(:,:,j) + M_CoM_bj; % Sum of Gen. In. Matrices of bodies of each link in CoM frame of each link
+%         [M_CoM_bj] = transformed_inertia_matrix(M_bj,g_bjli0); % Generalized Inertia Matrix in CoM frame of the link, for each body inside the link
+%         [M_CoM_bj] = transformed_inertia_matrix(M_bj,g_sbj); % Generalized Inertia Matrix of the link, in spatial
+        
+        M_CoM(:,:,j) = M_CoM(:,:,j) + M_bj;
+%         M_CoM(:,:,j) = M_CoM(:,:,j) + M_CoM_bj; % Sum of Gen. In. Matrices of bodies of each link in CoM frame of each link
     end
 
     [M_s_CoM(:,:,j)] = transformed_inertia_matrix(M_CoM(:,:,j),gsli0(:,:,j)); % Generalized Inertia Matrix of CoM frame of each link expressed in spatial frame of manipulator          

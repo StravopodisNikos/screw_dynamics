@@ -19,7 +19,7 @@ show(robot1);
 axis auto;
 % hold on;
 robot1.DataFormat = 'column';
-robo1t.Gravity = [0 0 -9.80665];
+robot1.Gravity = [0 0 -9.80665];
 showdetails(robot1);
 ref_config = homeConfiguration(robot1);
 
@@ -460,10 +460,17 @@ Pi_ref(:,:,3) = exp_pi_ref(:,:,5)*exp_pi_ref(:,:,6);
 % axis_xi_a3 = drawtwist(xi_ai(:,3));
 % hold on;
 
+%   3. FK mappings of CoM 
+gsli(:,:,1) = exp_ai(:,:,1)*gsli0(:,:,1);
+gsli(:,:,2) = exp_ai(:,:,1)*Pi(:,:,1)*exp_ai(:,:,2)*gsli0(:,:,2);
+gsli(:,:,3) = exp_ai(:,:,1)*Pi(:,:,1)*exp_ai(:,:,2)*Pi(:,:,2)*exp_ai(:,:,3)*gsli0(:,:,3);
+gsli(:,:,4) = exp_ai(:,:,1)*Pi(:,:,1)*exp_ai(:,:,2)*Pi(:,:,2)*exp_ai(:,:,3)*exp_ai(:,:,4)*gsli0(:,:,4);
+gsli(:,:,5) = exp_ai(:,:,1)*Pi(:,:,1)*exp_ai(:,:,2)*Pi(:,:,2)*exp_ai(:,:,3)*exp_ai(:,:,4)*exp_ai(:,:,5)*gsli0(:,:,5);
+gsli(:,:,6) = exp_ai(:,:,1)*Pi(:,:,1)*exp_ai(:,:,2)*Pi(:,:,2)*exp_ai(:,:,3)*exp_ai(:,:,4)*exp_ai(:,:,5)*exp_ai(:,:,6)*gsli0(:,:,6);
 %% Jbsli0
 for i=1:6
-    [Jbsli(:,:,i),Jbsli_POE(:,:,i)] = Jbody_CoM_6DoF(xi_ai, exp_ai, Pi, gsli0, i);
-    [Jbsli_ref(:,:,i),Jbsli_ref_POE(:,:,i)] = Jbody_CoM_6DoF(xi_ai, exp_ai, Pi_ref, gsli0, i);
+    [Jbsli(:,:,i),Jssli(:,:,i),Jbsli_POE(:,:,i)] = Jbody_CoM_6DoF(xi_ai, exp_ai, Pi, gsli0, gsli, i);
+    [Jbsli_ref(:,:,i),Jssli_ref(:,:,i),Jbsli_ref_POE(:,:,i)] = Jbody_CoM_6DoF(xi_ai, exp_ai, Pi_ref, gsli0, gsli0, i);
 end
 %% Calculate Spatial Jacobian for test anatomy in zero configuration
 % For Spatial Jacobian, gst0 is for 3dof Ts24 in test anatomy-configuration: gst0 = nTs24
@@ -543,18 +550,32 @@ gd_wanted(3,4) = gd_POE(3,4)-0.1;
 wrench = [0 0 0 0 0 50];
 fext_TOOL = externalForce(robot,'TOOL',wrench,config); % ONLY for 6 DoF
 %% POE Dynamics
-theta_dot = [10 0 0 0 0 0]';
-theta_dotdot = [1000 0 0 0 0 0]';
+theta_dot = [1 0 0 0 0 0]';
+theta_dotdot = [10 0 0 0 0 0]';
 Mi  =  M0_CoM; % link inertia frame
 Mi_s  = M0_s_CoM; % spatial frame
-Ji = Jbsli_ref;
-[M1, M1_POE, dM1_POE, C1_POE] = manipulator_inertia_matrix_6DoF(xi_ai, exp_ai, Pi_ref ,Mi, Mi_s,Ji, theta_dot);
+Jis = Jssli_ref;
+Jib = Jbsli_ref;
+[M1s, M1b, M1_POE, dM1_POE, C1_POE] = manipulator_inertia_matrix_6DoF(xi_ai, exp_ai, Pi_ref, gsli0, Mi, Mi_s, Jis, Jib, theta_dot);
+M1m = massMatrix(robot1,config);
 [N1_POE] = calculate_gravity_matrix_6DoF(xi_ai, gsli0,[Mi(1,1,1) Mi(1,1,2) Mi(1,1,3) Mi(1,1,4) Mi(1,1,5) Mi(1,1,6)]',  Pi_ref, config);
 gravTorq1 = gravityTorque(robot1,ref_config);
+
 joint_torque1 = M1_POE*theta_dotdot + C1_POE*theta_dot + N1_POE;
 jointTorq_ref = inverseDynamics(robot1,ref_config,theta_dot,theta_dotdot);
 dyn1_error = jointTorq_ref - joint_torque1; % Matlab - My_POE_Way
 
+
+Jis = Jssli;
+Jib = Jbsli;
+[M2s, M2b, M2_POE, dM2_POE, C2_POE] = manipulator_inertia_matrix_6DoF(xi_ai, exp_ai, Pi, gsli0, Mi, Mi_s, Jis, Jib, theta_dot);
+M2m = massMatrix(robot2,config);
+[N2_POE] = calculate_gravity_matrix_6DoF(xi_ai, gsli0,[Mi(1,1,1) Mi(1,1,2) Mi(1,1,3) Mi(1,1,4) Mi(1,1,5) Mi(1,1,6)]',  Pi, config);
+gravTorq2 = gravityTorque(robot2,ref_config);
+
+joint_torque2 = M2_POE*theta_dotdot + C2_POE*theta_dot + N2_POE;
+jointTorq_test = inverseDynamics(robot2,ref_config,theta_dot,theta_dotdot);
+dyn2_error = jointTorq_test - joint_torque2; % Matlab - My_POE_Way
 %% Joint torques calculation [N*m]
 % Gravity Compensation
 %% ONLY when 12 DoF considered

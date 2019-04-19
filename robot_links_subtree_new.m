@@ -1,4 +1,4 @@
-function [robot_links,CoM_robot_links,gsli0,M_CoM,M_s_CoM] = robot_links_subtree_new(robot,config,nDoF)
+function [robot_links,CoM_robot_links,gsli0,gsbj0,M_CoM,M_s_CoM] = robot_links_subtree_new(robot,config,nDoF)
 % Input 1: a robot tree model imported from urdf file
 % Input 2: robot configuration
 % Input 3: robot's DoF
@@ -60,7 +60,7 @@ for j = 1:nDoF % nLinks = nDoF + 1
 %     config(:,j) = homeConfiguration(robot_links(j)); 
     CoM_robot_links(:,j) = centerOfMass(robot_links(j),config(j)); % CoM of links reletive to link base frame
 %     TFs_com1(:,:,j) = getTransform(robot,config,char(robot_links(j).BodyNames(1)),char(robot.BaseName));
-    TFs_com2(:,:,j) = getTransform(robot,config,char(robot_links(j).BaseName),char(robot.BaseName));
+    TFs_com2(:,:,j) = getTransform(robot,config,char(robot_links(j).BaseName),char(robot.BaseName));   % g_s(j-1)
 %     TFs_com3(:,:,j) = getTransform(robot,config,char(robot_links(j-1).BodyNames(body_counter(j-1)))); % gets tf from last body of previous link to spatial frame of first robot model
 %     CoM_robot_links1(:,j) = TFs_com1(:,:,j)*[CoM_robot_links(:,j);1]; % q|A = g|A/B * q|B
     CoM_robot_links2(:,j) = TFs_com2(:,:,j)*[CoM_robot_links(:,j);1]; % q|A = g|A/B * q|B
@@ -96,15 +96,22 @@ for j=1:nDoF % for all links of robot
 
 %         g_sbj = getTransform(robot,config,char(robot_links(j).BodyNames(body_counter(j)))); % Get tf of body object in spatial frame
 %         g_bjli0 = inv(g_sbj)*gsli0(:,:,j); % get tf of CoM of link to body object frame
+
+        g_linkRef2COMj(:,:,j) = inv(TFs_com2(:,:,j))*gsli0(:,:,j);
         
 %         [M_CoM_bj] = transformed_inertia_matrix(M_bj,g_bjli0); % Generalized Inertia Matrix in CoM frame of the link, for each body inside the link
 %         [M_CoM_bj] = transformed_inertia_matrix(M_bj,g_sbj); % Generalized Inertia Matrix of the link, in spatial
         
-        M_CoM(:,:,j) = M_CoM(:,:,j) + M_bj;
+        M_CoM(:,:,j) = M_CoM(:,:,j) + M_bj; % M_bj_from_linkRef
+        
 %         M_CoM(:,:,j) = M_CoM(:,:,j) + M_CoM_bj; % Sum of Gen. In. Matrices of bodies of each link in CoM frame of each link
     end
 
-    [M_s_CoM(:,:,j)] = transformed_inertia_matrix(M_CoM(:,:,j),gsli0(:,:,j)); % Generalized Inertia Matrix of CoM frame of each link expressed in spatial frame of manipulator          
+%     [M_b_CoM(:,:,j)] = transformed_inertia_matrix(M_CoM(:,:,j),g_linkRef2COMj(:,:,j));
+%     M_CoM(:,:,j) = M_b_CoM(:,:,j);
+    [M_s_CoM(:,:,j)] = transformed_inertia_matrix(M_CoM(:,:,j),TFs_com2(:,:,j));
+    gsbj0 = TFs_com2;
+%     [M_s_CoM(:,:,j)] = transformed_inertia_matrix(M_CoM(:,:,j),gsli0(:,:,j)); % Generalized Inertia Matrix of CoM frame of each link expressed in spatial frame of manipulator          
 
 end     
 

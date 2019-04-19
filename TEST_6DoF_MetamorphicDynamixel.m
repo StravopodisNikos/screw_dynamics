@@ -10,20 +10,22 @@ addpath('/home/nikos/matlab_ws/kinematics/util')
 addpath('/home/nikos/matlab_ws/project_ABBpaper/matlab_files')
 
 %% Show reference anatomy robot
-[robot1] = importrobot('/home/nikos/matlab_ws/modular_dynamixel/reference_MMD_inverse.urdf'); 
-% we use 12 DoF for evaluation of matlab-pseudo-configuration
-% [robot1] = importrobot('/home/nikos/matlab_ws/modular_dynamixel/MMDinertia_scale.urdf'); 
+% % [robot1] = importrobot('/home/nikos/matlab_ws/modular_dynamixel/reference_MMD_inverse.urdf'); 
+% % % we use 12 DoF for evaluation of matlab-pseudo-configuration
+% % % [robot1] = importrobot('/home/nikos/matlab_ws/modular_dynamixel/MMDinertia_scale.urdf'); 
+% % 
+% % reference_figure = figure;
+% % show(robot1);
+% % axis auto;
+% % % hold on;
+% % robot1.DataFormat = 'column';
+% % robot1.Gravity = [0 0 -9.80665];
+% % showdetails(robot1);
+% % ref_config = homeConfiguration(robot1);
 
-reference_figure = figure;
-show(robot1);
-axis auto;
-% hold on;
-robot1.DataFormat = 'column';
-robot1.Gravity = [0 0 -9.80665];
-showdetails(robot1);
-ref_config = homeConfiguration(robot1);
-
-[robot0_links,CoM_robot0_links,gsli0,M0_CoM,M0_s_CoM] = robot_links_subtree_new(robot1,ref_config,6);
+robotname = '/home/nikos/matlab_ws/modular_dynamixel/reference_MMD_inverse.urdf';
+[RefRobot,RefFig,RefConfig,NumDoF] = ImportRobotRefAnatomyModel(robotname);
+[robot0_links,CoM_robot0_links,gsli0,gsbj0,M0_CoM,M0_s_CoM] = robot_links_subtree_new(robot1,ref_config,6);
 %% Test configuration
 % Change configuration for 12 DoF structure. Fast Display of metamorphic
 % anatomies. Can be used only for MMDinertia.urdf & MMDinertia_scale.urdf
@@ -62,7 +64,7 @@ robot2.DataFormat = 'column';
 robot2.Gravity = [0 0 -9.80665];
 showdetails(robot2);
 config = homeConfiguration(robot2);
-[robot2_links,CoM_robot2_links,gsli2,M2_CoM,M2_s_CoM] = robot_links_subtree_new(robot2,config,6);
+[robot2_links,CoM_robot2_links,gsli2,gsbj2,M2_CoM,M2_s_CoM] = robot_links_subtree_new(robot2,config,6);
 
 %% FKP for each body in reference anatomy and zero configuration!!!
 robot = robot1;
@@ -361,6 +363,10 @@ tpi_ref = [0 0 0 0 0 0]';% Reference Anatomy values are theta_p_i's specified in
 % tpi = [-pi/4 0 pi/4 0 0 0]'; % For robot file: x_anatII.urdf
 % tpi = [-0.7854 0 1.5708 0 0 0]'; % For robot file: x_test_inverse_MMD.urdf
 tpi = [0.7854 0.7854 0 -0.7854 1.5708 -0.7854]'; % For robot file: x_test_inverse_MMD1.urdf
+
+% test for new configuration the reference anatomy
+config = [1 1 -1 0 0 0]';
+
 %% Active screws
 wi(:,1) = [0 0 1]';
 wi(:,2) = [0 1 0]';
@@ -492,8 +498,6 @@ gst0 = [     0.0008    1.0000   -0.0080    0.1711;...
 % gd_test = getTransform(robot,test,casebody4)
 % error = gd-gd_test
 
-% test for new configuration the reference anatomy
-config = [0 0 0 0 0 0]';
 
 gd_2 = getTransform(robot1,config,TOOL); 
 gd_2_POE = MMD_POE_FKP(config,xi_ai,[0 0 0 0 0 0]',xi_pi,gst0);
@@ -550,19 +554,21 @@ gd_wanted(3,4) = gd_POE(3,4)-0.1;
 wrench = [0 0 0 0 0 50];
 fext_TOOL = externalForce(robot,'TOOL',wrench,config); % ONLY for 6 DoF
 %% POE Dynamics
-theta_dot = [1 0 0 0 0 0]';
-theta_dotdot = [10 0 0 0 0 0]';
+theta_dot = [0 1 0 0 0 0]';
+theta_dotdot = [0 10 0 0 0 0]';
 Mi  =  M0_CoM; % link inertia frame
 Mi_s  = M0_s_CoM; % spatial frame
 Jis = Jssli_ref;
 Jib = Jbsli_ref;
 [M1s, M1b, M1_POE, dM1_POE, C1_POE] = manipulator_inertia_matrix_6DoF(xi_ai, exp_ai, Pi_ref, gsli0, Mi, Mi_s, Jis, Jib, theta_dot);
 M1m = massMatrix(robot1,config);
+V1b = C1_POE*theta_dot;
+V1m = velocityProduct(robot1,config,theta_dot);
 [N1_POE] = calculate_gravity_matrix_6DoF(xi_ai, gsli0,[Mi(1,1,1) Mi(1,1,2) Mi(1,1,3) Mi(1,1,4) Mi(1,1,5) Mi(1,1,6)]',  Pi_ref, config);
-gravTorq1 = gravityTorque(robot1,ref_config);
+gravTorq1 = gravityTorque(robot1,config);
 
 joint_torque1 = M1_POE*theta_dotdot + C1_POE*theta_dot + N1_POE;
-jointTorq_ref = inverseDynamics(robot1,ref_config,theta_dot,theta_dotdot);
+jointTorq_ref = inverseDynamics(robot1,config,theta_dot,theta_dotdot);
 dyn1_error = jointTorq_ref - joint_torque1; % Matlab - My_POE_Way
 
 
@@ -570,11 +576,13 @@ Jis = Jssli;
 Jib = Jbsli;
 [M2s, M2b, M2_POE, dM2_POE, C2_POE] = manipulator_inertia_matrix_6DoF(xi_ai, exp_ai, Pi, gsli0, Mi, Mi_s, Jis, Jib, theta_dot);
 M2m = massMatrix(robot2,config);
+V2b = C2_POE*theta_dot;
+V2m = velocityProduct(robot2,config,theta_dot);
 [N2_POE] = calculate_gravity_matrix_6DoF(xi_ai, gsli0,[Mi(1,1,1) Mi(1,1,2) Mi(1,1,3) Mi(1,1,4) Mi(1,1,5) Mi(1,1,6)]',  Pi, config);
-gravTorq2 = gravityTorque(robot2,ref_config);
+gravTorq2 = gravityTorque(robot2,config);
 
 joint_torque2 = M2_POE*theta_dotdot + C2_POE*theta_dot + N2_POE;
-jointTorq_test = inverseDynamics(robot2,ref_config,theta_dot,theta_dotdot);
+jointTorq_test = inverseDynamics(robot2,config,theta_dot,theta_dotdot);
 dyn2_error = jointTorq_test - joint_torque2; % Matlab - My_POE_Way
 %% Joint torques calculation [N*m]
 % Gravity Compensation

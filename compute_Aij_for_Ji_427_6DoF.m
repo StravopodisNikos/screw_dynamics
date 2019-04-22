@@ -66,7 +66,8 @@ elseif i==5
     elseif j==3 % i<j
         Aij_427 = inv(ad(Pi(:,:,3)*exp_ai(:,:,j+1)*exp_ai(:,:,i)));
     elseif j==4 % i<j
-        Aij_427 = inv(ad(exp_ai(:,:,j+1)*exp_ai(:,:,i)));
+%         Aij_427 = inv(ad(exp_ai(:,:,j+1)*exp_ai(:,:,i)));
+        Aij_427 = inv(ad(exp_ai(:,:,j+1)));
     elseif j==5 % i<j
         Aij_427 = eye(6);
     elseif j==6 % i<j

@@ -16,13 +16,13 @@ addpath('/home/nikos/matlab_ws/geom2d/geom2d')
 addpath('/home/nikos/matlab_ws/geom2d/utils')
 
 [U,S,V] = svd(QORE); % units are (m/s^2)^-1
-sigma = [1/S(3,3)  1/S(2,2) 1/S(1,1)]; % so I take the inverse singular values
+sigma = [1/S(6,6)  1/S(5,5) 1/S(4,4) 1/S(3,3)  1/S(2,2) 1/S(1,1)]; % so I take the inverse singular values
 f0 = c;
-f1 = QORE(1:3,1);
+f1 = QORE(1:3,1); % I dont like that i extract a 3x3 matrix from the 6x6 core
 f2 = QORE(1:3,2);
 f3 = QORE(1:3,3);
 orientEulerAngles = rotm2eul(QORE(1:3,1:3)); % zyx euler angles
-
+sigma = [1/norm(f3) 1/norm(f2) 1/norm(f1)];
 AccelEllipsoid = [f0(1:3)' sigma rad2deg(orientEulerAngles)];
 AccelEllipsoid0 = [[0 0 0] sigma rad2deg(orientEulerAngles)]; % no C,G
 

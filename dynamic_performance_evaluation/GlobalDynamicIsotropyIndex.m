@@ -33,7 +33,7 @@ exp_ai(:,:,6) = twistexp(xi_ai(:,6), q(6));
 [~,Pi] = CalculatePseudoExponentials(xi_pi,tpi);
 %% Jacobians: Js, Jb and Mass Matrix
 [~,Jb,~] = CalculateMetamorphicJacobians_6DoF(q',xi_ai,tpi,xi_pi,Pi,gst0);
-[Jbsli_test,~,Jbsli_POE_test,~] = calculate_CoM_BodyJacobians_6DoF_MMD(q',xi_ai,Pi_test,gsli0);
+[Jbsli_test,~,Jbsli_POE_test,~] = calculate_CoM_BodyJacobians_6DoF_MMD(q',xi_ai,Pi,gsli0);
 M = CalculateOnlyBodyMassMatrix(Jbsli_test,M0b_CoM);
 
 %% Build Ellipsoid Core

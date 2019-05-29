@@ -33,7 +33,7 @@ exp_ai(:,:,6) = twistexp(xi_ai(:,6), q(6));
 [~,Pi] = CalculatePseudoExponentials(xi_pi,tpi);
 %% Jacobians: Js, Jb and Mass Matrix
 [~,Jb,~] = CalculateMetamorphicJacobians_6DoF(q',xi_ai,tpi,xi_pi,Pi,gst0);
-[Jbsli_test,~,Jbsli_POE_test,~] = calculate_CoM_BodyJacobians_6DoF_MMD(q',xi_ai,Pi_test,gsli0);
+[Jbsli_test,~,Jbsli_POE_test,~] = calculate_CoM_BodyJacobians_6DoF_MMD(q',xi_ai,Pi,gsli0);
 M = CalculateOnlyBodyMassMatrix(Jbsli_test,M0b_CoM);
 
 %% Build Ellipsoid Core
@@ -42,8 +42,8 @@ L = diag(trq_u);
 Q = inv(Jb')*M'*inv(L')*inv(L)*M*inv(Jb); % as in paper "Evaluation of the dynamic performance...self-weight influence" PY Cheng - KJ Cheng
 
 %% Set distance from singularity
-e1 = 0.001;
-e2 = 0.001;
+e1 = 0.000001;
+e2 = 1.0e-12;
 c1 = e1 - det(Q);
 c2 = e2 - det(Jb);
 

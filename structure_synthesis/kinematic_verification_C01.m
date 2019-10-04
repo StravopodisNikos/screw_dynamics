@@ -27,10 +27,12 @@ axis auto;
 box on;
 robot_DoF = 1;
 %% Zero Structure-Anatomy-Configuration tfs
+%% all pi,wi for twists,expos creation must be calculated from this
+%% AND recalculated depending the synthetic variables!!!
 scale = 0.025; scale_active = 0.075;
 adaptor = char(robot1.BodyNames(2)); Ts2 = getTransform(robot1,config,adaptor); drawframe(Ts2, scale); hold on;
 frame = char(robot1.BodyNames(3)); Ts3 = getTransform(robot1,config,frame); drawframe(Ts3, scale_active); hold on;
-PseudoConnector1a = char(robot1.BodyNames(4)); Ts4 = getTransform(robot1,config,PseudoConnector1a); drawframe(Ts3, scale); hold on;
+PseudoConnector1a = char(robot1.BodyNames(4)); Ts4 = getTransform(robot1,config,PseudoConnector1a); drawframe(Ts4, scale); hold on;
 PseudoConnector1b = char(robot1.BodyNames(5)); Ts5 = getTransform(robot1,config,PseudoConnector1b); drawframe(Ts5, scale); hold on;
 frame1 = char(robot1.BodyNames(8)); Ts8 = getTransform(robot1,config,frame1); drawframe(Ts8, scale); hold on;
 
@@ -38,6 +40,10 @@ frame1 = char(robot1.BodyNames(8)); Ts8 = getTransform(robot1,config,frame1); dr
 g_s_li0 = getTransform(robot1,config,frame);
 g_s_lj0 = getTransform(robot1,config,PseudoConnector1b);
 g_s_li10 = getTransform(robot1,config,frame1);
+
+g_s_lk0 = getTransform(robot1,config,PseudoConnector1a);
+g_li_lk0 = getTransform(robot1,config,PseudoConnector1a,frame);
+g_lk_lj0 = getTransform(robot1,config,PseudoConnector1b,PseudoConnector1a);
 
 g_li_lj0 = getTransform(robot1,config,PseudoConnector1b,frame);
 g_lj_li10 = getTransform(robot1,config,frame1,PseudoConnector1b);
@@ -48,7 +54,31 @@ g0(:,:,3) = g_s_li10;
 g0(:,:,4) = g_li_lj0;
 g0(:,:,5) = g_lj_li10;
 g0(:,:,6) = g_li_li10;
-%% Test anatomy θpj=1.5708
+
+g0(:,:,7) = g_li_lk0; % with these 2: i->k->j->i1
+g0(:,:,8) = g_lk_lj0;
+g0(:,:,8) = g_s_lk0;
+%% Extracs initial geometry attributes
+pi(:,1)= Ts3(1:3,4); % p1 on ξi
+pi(:,2)= Ts5(1:3,4); % p2 on ξj
+pi(:,3)= Ts8(1:3,4); % p3 on ξi+1
+pi(:,4)= Ts4(1:3,4); % p1 on ξk
+wi(:,1) = [0 0 1]';
+wi(:,2) = [0 1 0]';
+wi(:,3) = [0 1 0]';
+%% Create twists Numeric
+xi(:,1) = createtwist(wi(:,1),pi(:,1)); %ξi
+xi(:,2) = createtwist(wi(:,2),pi(:,2)); %ξj
+xi(:,3) = createtwist(wi(:,3),pi(:,3)); %ξi+1
+%% Extract relative twists
+% This are the relative twists of manipulator in reference
+% anatomy-configuration, as from eq.3.10
+xi_j = inv(ad(g_s_li0))*xi(:,2);
+% xj_i1 = inv(ad(g_s_lj0))*xi(:,3);
+xi_i1_0 = inv(ad(g_s_li0))*xi(:,3);
+
+%% Test1 anatomy: frame__PseudoConnector1a=[0,0,0,0,0,0] θpj=1.5708
+%% tests metamorphic_joint: PseudoConnector1a__PseudoConnector1b
 [robot2] = importrobot('/home/nikos/matlab_ws/modular_dynamixel/structure_synthesis/C010_1.urdf'); % with 1 Pseudo 
 robot2.DataFormat = 'column';
 robot1.Gravity = [0 0 -9.80665];
@@ -63,7 +93,23 @@ robot_DoF = 1;
 scale = 0.025; scale_active = 0.075;
 frame_1 = char(robot2.BodyNames(3)); Ts3_1 = getTransform(robot2,config2,frame_1); drawframe(Ts3_1, scale_active); hold on;
 frame1_1 = char(robot2.BodyNames(8)); Ts8_1 = getTransform(robot2,config2,frame1_1); drawframe(Ts8_1, scale); hold on;
+PseudoConnector1a_1 = char(robot2.BodyNames(4)); Ts4_1 = getTransform(robot2,config2,PseudoConnector1a_1); drawframe(Ts4_1, scale); hold on;
 PseudoConnector1b_1 = char(robot2.BodyNames(5)); Ts5_1 = getTransform(robot2,config,PseudoConnector1b_1); drawframe(Ts5_1, scale); hold on;
+%% Test2 anatomy: frame__PseudoConnector1a=[1.5708,0,0,0,0,0] θpj=0
+%% tests synthetic_joint: frame_PseudoConnector1a
+[robot3] = importrobot('/home/nikos/matlab_ws/modular_dynamixel/structure_synthesis/C010_2.urdf'); % with 1 Pseudo 
+robot3.DataFormat = 'column';
+robot3.Gravity = [0 0 -9.80665];
+config3 = homeConfiguration(robot3);
+test2_figure = figure;
+show(robot3,config3,'PreservePlot',false);
+hold on;
+axis auto;
+box on;
+frame_2 = char(robot3.BodyNames(3)); Ts3_2 = getTransform(robot3,config2,frame_2); drawframe(Ts3_2, scale_active); hold on;
+frame1_2 = char(robot3.BodyNames(8)); Ts8_2 = getTransform(robot3,config2,frame1_2); drawframe(Ts8_2, scale); hold on;
+PseudoConnector1a_2 = char(robot3.BodyNames(4)); Ts4_2 = getTransform(robot3,config2,PseudoConnector1a_2); drawframe(Ts4_2, scale); hold on;
+PseudoConnector1b_2 = char(robot3.BodyNames(5)); Ts5_2 = getTransform(robot3,config,PseudoConnector1b_2); drawframe(Ts5_2, scale); hold on;
 
 %% Create twists Symbolic
 % pi(:,1)= sym('p0i',[3 1]); % p0i on ξai
@@ -72,56 +118,135 @@ PseudoConnector1b_1 = char(robot2.BodyNames(5)); Ts5_1 = getTransform(robot2,con
 % wi(:,1)= sym('w0i',[3 1]); % w0i on ξai
 % wi(:,2)= sym('w1j',[3 1]); % w1j on ξpj
 % wi(:,3)= sym('w0i1',[3 1]); % w0_i+1 on ξa_i+1
-%% Create twists Numeric
-pi(:,1)= Ts3(1:3,4); % p1 on ξi
-pi(:,2)= Ts5(1:3,4); % p2 on ξj
-pi(:,3)= Ts8(1:3,4); % p3 on ξi+1
-wi(:,1) = [0 0 1]';
-wi(:,2) = [0 1 0]';
-wi(:,3) = [0 1 0]';
-xi(:,1) = createtwist(wi(:,1),pi(:,1)); %ξi
-xi(:,2) = createtwist(wi(:,2),pi(:,2)); %ξj
-xi(:,3) = createtwist(wi(:,3),pi(:,3)); %ξi+1
 %% Fwd Kinematic Mapping
 % ti = sym('ti',[3 1], 'real');
 % ti(1) = 'ti';
 % ti(2) = 'tp1';
 % ti(3) = 'ti1';
-ti = [0 1.5708 0]';
+ti = [0 0 0]'; % from here i control the 3 angles: 1:active1 2:passive1 3:active2
+Rx01 = 1.5708; Ry01=0; Rz01=0; Px01=0; Py01=0.05; Pz01=0.05; % from here i control the 
+% 6 Euler variables of the synthetic joint. These variables are ONLY LOCAL
+% in the frame-PseudoConnector1a. i.e. Describe how "Pseudoconector1a"
+% changes with respect to "frame".
+
+% Here i test only metamorphic_joint:PseudoConnector1a__PseudoConnector1b
+% Change only in theta_j with fixed structure. I did it to study the twists
+% and DH transform
+% % expi(:,:,1) = twistexp(xi(:,1), ti(1));
+% % expi(:,:,2) = twistexp(xi(:,2), ti(2));
+% % expi(:,:,3) = twistexp(xi(:,3), ti(3));
+% % g(:,:,1) = expi(:,:,1)*g0(:,:,1); % g_s_li
+% % g(:,:,2) = expi(:,:,1)*expi(:,:,2)*g0(:,:,2); % g_s_lj
+% % g(:,:,3) = expi(:,:,1)*expi(:,:,2)*expi(:,:,3)*g0(:,:,3); % g_s_li1
+
+% Here i test FKM of frame__PseudoConnector1a. This is the joint that
+% genetic algorithm changes its EULER variables.
+% My goal is to convert this variables to POE
+% g_fP1a = [R_fP1a p
+%            0^T   1]
+R_fP1a = rotz(Rz01)*roty(Ry01)*rotx(Rx01);
+[wmegaR thetaR] = rotparam(R_fP1a); % this is SO(3) element-skew matrix and angle
+exp_wmegaR = skewexp(wmegaR,thetaR); % ==R_fP1a ALWAYS the same
+%  find twist of synthetic joint_it is "equivalent to the reference" since
+%  twist must be built for reference structure
+twist_fP1a = createtwist(wmegaR,[g_s_lk0(1,4)+Px01 g_s_lk0(2,4)+Py01 g_s_lk0(3,4)+Pz01]'); %ξk???
+
+exp_fP1a = twistexp(twist_fP1a,thetaR);
+% g_fP1a = [exp_wmegaR [g_s_lk0(1,4)+Px01 g_s_lk0(2,4)+Py01 g_s_lk0(3,4)+Pz01]'; 0 0 0 1];
+% [twist_g_fP1a theta_g_fP1a] = homtotwist(g_fP1a); % this is SE(3) element that represents 
+% the rigid motion of the structure change induced by synthetic_joint:frame_PseudoConnector1a
 expi(:,:,1) = twistexp(xi(:,1), ti(1));
 expi(:,:,2) = twistexp(xi(:,2), ti(2));
 expi(:,:,3) = twistexp(xi(:,3), ti(3));
-g(:,:,1) = expi(:,:,1)*g0(:,:,1); % g_s_li
-g(:,:,2) = expi(:,:,1)*expi(:,:,2)*g0(:,:,2); % g_s_lj
-g(:,:,3) = expi(:,:,1)*expi(:,:,2)*expi(:,:,3)*g0(:,:,3); % g_s_li1
-%% Express twists with respect to previous reference frames
-% This are the relative twists of manipulator in reference
-% anatomy-configuration, as from eq.3.10
-xi_i1_0 = inv(ad(g_s_li0))*xi(:,3);  % reference WORKS
-g_li_li1_0 = twistexp(xi_i1_0,0)*g0(:,:,6); % IT WORKS SINCE: g_li_li1_0
-% = g_li_li10
-xi_j = inv(ad(g_s_li0))*xi(:,2);
-xj_i1 = inv(ad(g_s_lj0))*xi(:,3);
 
-% Spatial Jacobian is instantaneous twists with respect to {s}
-% Js(:,1)=sym(xi(:,1)); % for sym only
-Js(:,1)=xi(:,1);
-% Js(:,2)=ad(expi(:,:,1))*xi(:,2);
-Js(:,2)=ad(expi(:,:,1)*expi(:,:,2))*xi(:,3);
-% Relative Jacobian: NOT STUDIED YET
-Jr = xi(:,1);
-Jr(:,2) = ad(expi(:,:,1)*expi(:,:,2))*xi_i1_0;
+% For zero thetas the following are the g_s_tfs!!! synthetic joint CHANGES the
+% zero tfs!!! So, g0 is for reference structure anatomy and gn is new
+% structure
+gn(:,:,1) = exp_fP1a*g0(:,:,1); % g_s_li0
+gn_s_li0 = getTransform(robot3,config3,frame_2);
+gn(:,:,2) = exp_fP1a*g0(:,:,2); % g_s_lj0
+gn_s_lj0 = getTransform(robot3,config3,PseudoConnector1b_2);
+gn(:,:,3) = exp_fP1a*g0(:,:,3); % g_s_li10
+gn_s_li10 = getTransform(robot3,config3,frame1_2);
 
+% % gn(:,:,4) = exp_fP1a*g0(:,:,4); % g_li_lj0
+% % gn_li_lj0 = getTransform(robot3,config3,PseudoConnector1b_2,frame_2);
+% % gn(:,:,5) = exp_fP1a*g0(:,:,5); % g_lj_li10
+% % gn_lj_li10 = getTransform(robot3,config3,frame1_2,PseudoConnector1b_2);
+
+% gn(:,:,6) = exp_fP1a*g0(:,:,6);
+% gn(:,:,7) = exp_fP1a*g0(:,:,7);
+gn(:,:,8) = exp_fP1a*g0(:,:,8); % g_s_lk0
+gn_s_lk0 = getTransform(robot1,config,PseudoConnector1a);
+
+
+% Here is POE FKM for new anatomy
+g(:,:,1) = expi(:,:,1)*gn(:,:,1); % g_s_li
+g(:,:,2) = expi(:,:,1)*expi(:,:,2)*gn(:,:,2); % g_s_lj
+g(:,:,3) = expi(:,:,1)*expi(:,:,2)*expi(:,:,3)*gn(:,:,3); % g_s_li1
+
+%% Jacobians
+% g_li_li1_0 = twistexp(xi_i1_0,0)*g0(:,:,6); % IT WORKS SINCE: g_li_li1_0 = g_li_li10
+
+% Only metamorphic joint
+% % % Spatial Jacobian is instantaneous twists with respect to {s}
+% % % Js(:,1)=sym(xi(:,1)); % for sym only
+% % Js(:,1)=xi(:,1);
+% % % Js(:,2)=ad(expi(:,:,1))*xi(:,2);
+% % Js(:,2)=ad(expi(:,:,1)*expi(:,:,2))*xi(:,3);
+% % % Relative Jacobian: NOT STUDIED YET
+% % Jr = xi(:,1);
+% % Jr(:,2) = ad(expi(:,:,1)*expi(:,:,2))*xi_i1_0;
+
+% Synthetic and metamorphic
+Js(:,1) = xi(:,1);
+Js(:,2) = ad(expi(:,:,1)*exp_fP1a)*twist_fP1a;
+Js(:,3) = ad(expi(:,:,1)*exp_fP1a*expi(:,:,2))*xi(:,2);
+Js(:,4) = ad(expi(:,:,1)*exp_fP1a*expi(:,:,2)*expi(:,:,3))*xi(:,3);
+figure(test2_figure);
+xi_graph = drawtwist(Js(:,1)); hold on;
+xk_graph = drawtwist(Js(:,2)); hold on;
+xj_graph = drawtwist(Js(:,3)); hold on;
+xi1_graph = drawtwist(Js(:,4)); hold on;
+
+% project twist
+xi_k = inv(ad(gn_s_li0))*Js(:,2);
+xk_j = inv(ad(gn_s_lk0))*Js(:,3);
+xj_i1 = inv(ad(gn_s_lj0))*Js(:,4);
+%% Relative POE FKM
 % % This is eq.3.7 since relative twist has been found for reference
 % g_li_li1 = twistexp(xi_i1_0,ti(3))*g0(:,:,6); % as in eq.3.7 Murray p.94
 % This is the noPOE FKM eq.3.8 only Tf matrix between i-->i+1 joints
-g_li_li1a = twistexp(xi_j,ti(2))*g0(:,:,4)*twistexp(xj_i1,ti(3))*g0(:,:,5);
 
+ % for metamorphic only
+% g_li_li1a = twistexp(xi_j,ti(2))*g0(:,:,4)*twistexp(xj_i1,ti(3))*g0(:,:,5);
 
-% % only for evaluation
-% g_li_li1 = getTransform(robot1,[1.24 1.23]',frame1,frame)
-g_li_li1_1 = getTransform(robot2,[0 0]',frame1_1,frame_1);
-g_lj_li1_1 = getTransform(robot2,config,frame1_1,PseudoConnector1b_1);
+% for synthetic and metamorphic
+g_li_li1a = twistexp(xi_k,thetaR)*g0(:,:,7)*twistexp(xk_j,ti(2))*g0(:,:,8)*twistexp(xj_i1,ti(3))*g0(:,:,5); % for synthetic+metamorphic
+% g_li_li1a = exp_fP1a*twistexp(xi_j,ti(2))*g0(:,:,4)*twistexp(xj_i1,ti(3))*g0(:,:,5);
+
+%% Evaluation MyFKM-MATLAB
+% metamorphic only test
+% % % g_li_li1 = getTransform(robot1,[1.24 1.23]',frame1,frame)
+% % g_li_li1_1 = getTransform(robot2,[0 0]',frame1_1,frame_1);
+% % g_lj_li1_1 = getTransform(robot2,config,frame1_1,PseudoConnector1b_1);
+
+% synthetic test
+g_li_li1_1 = getTransform(robot3,config3,frame1_2,frame_2);
+
+error_g_li_li1_1 = g_li_li1a - g_li_li1_1
+
+% g_lj_li1_1 = getTransform(robot3,config3,frame1_2,PseudoConnector1b_2);
+
+g_s_li_1 = getTransform(robot3,config3,frame_2);
+g_s_li1_1 = getTransform(robot3,config3,frame1_2);
+g_s_lj_1 = getTransform(robot3,config3,PseudoConnector1b_2);
+
+error_g_s_li = g(:,:,1)-g_s_li_1
+error_g_s_lj = g(:,:,2)-g_s_lj_1
+error_g_s_li1 = g(:,:,3)-g_s_li1_1
+
+%% Graphical examination of twists
 % g-> ξ
 [xi_i1_abs th_i_i1_abs] = homtotwist(g_li_li1a); % the absolute transformation twist
 g = g_li_li1a*inv(g0(:,:,6));
@@ -142,7 +267,7 @@ xi_i1_rel_graph = drawtwist(xi_i1_rel); hold on;
 % [DH_i_i1_7] = POE2DH_LiaoWu(xi_i1_abs*th_i_i1_abs,[0 0 0 0 0 1]');
 % [DH_i_i1_8] = POE2DH_LiaoWu(xi_i1_rel*th_i_i1_rel,[0 0 0 0 0 1]');
 
-%% Solve system
+% Solve system
 syms aim1 Lim1 di thi
 % Solution of System 1
 sol_thi = solve(DH_i_i1_1(4),thi); field1 = 'thi';  value1 = sol_thi;

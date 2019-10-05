@@ -1,0 +1,247 @@
+<?xml version="1.0" ?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="kinematic_verification_01">
+<!-- 0-1 connection kinematic constraints and geometry verifaication -->
+<!-- H54P200 Dynamixel is 0 & ABSTRACT Pseudojoint is 1-->
+<!-- Possible structures are generated using xacro/properties -->
+<!-- builds C01: Connection Active-Passive @ /modular_dynamixel/structure_synthesis/C01.urdf-->
+
+<!-- Pseudojoint angles are designated as fixed and user specifies the θp angle! -->
+<xacro:property name="theta_p_1" value="0"/>
+<xacro:property name="final_theta_p_1" value="${0+theta_p_1}"/>
+<xacro:property name="theta_p_2" value="0"/>
+<xacro:property name="final_theta_p_2" value="${0+theta_p_2}"/>
+<!-- Metamorphic C01-->
+<xacro:property name="Rx01" value="1.5708"/>
+<xacro:property name="Ry01" value="0"/>
+<xacro:property name="Rz01" value="0"/>
+<xacro:property name="Px01" value="0.05"/>
+<xacro:property name="fPx01" value="${0.091+Px01}"/>
+<xacro:property name="Py01" value="0.05"/>
+<xacro:property name="Pz01" value="0.05"/>
+<!-- Metamorphic C10-->
+<xacro:property name="Rx10" value="0"/>
+<xacro:property name="Ry10" value="0"/>
+<xacro:property name="Rz10" value="0"/>
+<xacro:property name="Px10" value="0"/>
+<xacro:property name="Py10" value="0"/>
+<xacro:property name="fPy10" value="${-0.01+Py10}"/>
+<xacro:property name="Pz10" value="0"/>
+<xacro:property name="fPz10" value="${0.032+Pz10}"/>
+<!-- MASS parameters for Pseudojoint Design-->
+<xacro:property name="pseudo_mass" value="2"/>
+
+<!-- ROBOT DESCRIPTION-->
+<link name="world"/>
+
+<joint name="glue_robot_to_world" type="fixed">
+    <parent link="world"/>
+    <child link="base_link"/>
+</joint>
+
+<link name="base_link">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0.0021 -0.0033 -0.00574"/>
+      <mass value ="0.855" />
+      <inertia ixx="0.0040487283" ixy="0.000016444686" ixz="0.0001418628" iyy="0.0040350489" iyz="-0.0002178358" izz="0.0003489357"/>
+    </inertial>
+    <visual>
+      <origin rpy="1.57 0 0" xyz="0 0 0.120"/>
+      <geometry>
+        <mesh filename="/home/nikos/matlab_ws/modular_dynamixel/H54P-200.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="gray">
+        <color rgba="0.5 0.5 0.5 0.9"/>
+      </material>
+    </visual>
+</link>
+
+<!-- START ONLY visual representation of adaptor to lock base in table-->
+  <joint name="base_link__adaptor" type="fixed">
+    <origin rpy="0 0 0" xyz="-0.030 0 0.057"/>
+    <parent link="base_link"/>
+    <child link="adaptor"/>
+  </joint>
+<link name="adaptor">
+      <inertial>
+        <origin rpy="0 0 0" xyz="0 0.00132 0"/>
+        <mass value ="0.1" />
+        <inertia ixx="3.5655174315e-07" ixy="3.0094534019e-15" ixz="-3.0659548585e-16" iyy="8.1971725028e-7" iyz="1.0236492333e-16" izz="5.0684999189e-07"/>
+      </inertial>
+      <visual>
+      <origin rpy="0 0 -1.57" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="/home/nikos/matlab_ws/modular_dynamixel/FR54_A110.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver">
+        <color rgba="0.753 0.753 0.753 0.5"/>
+      </material>
+    </visual>
+</link>
+<!-- END ONLY visual representation-->
+
+<!-- START ADD IMPROVED FRAME FOR base_link-->
+  <joint name="base_link__frame" type="revolute">
+    <origin rpy="0 0 0" xyz="0 0 0.057"/>
+    <parent link="base_link"/>
+    <child link="frame"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="0" lower="-1.57" upper="1.57" velocity="4.0841"/>
+  </joint>
+
+<link name="frame">
+    <inertial>
+      <origin rpy="0 0 -1.57" xyz="0 0 0"/>
+      <mass value ="0.3" />
+      <inertia ixx="0.2e-9" ixy="0.1e-11" ixz="0.1e-9" iyy="0.1e-9" iyz="0.2e-12" izz="0.1e-9"/>
+    </inertial> 
+    <visual>
+      <origin rpy="0 0 -1.57" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="/home/nikos/matlab_ws/modular_dynamixel/FRP54-H221.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="gray">
+        <color rgba="0.5 0.5 0.5 0.9"/>
+      </material>
+    </visual>
+</link>
+<!-- END ADD IMPROVED FRAME FOR base_link-->
+
+<!-- This joint is parameterized for C01-->
+  <joint name="frame__PseudoConnector1a" type="fixed">
+    <origin rpy="${Rx01} ${Ry01} ${Rz01}" xyz="${fPx01} ${Py01} ${Pz01}"/>
+    <parent link="frame"/>
+    <child link="PseudoConnector1a"/>
+  </joint>
+
+  <!-- This is the pseudojoint1 -->
+<link name="PseudoConnector1a">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0.00856"/>
+      <mass value ="${pseudo_mass}" />
+      <inertia ixx="1.345843e-07" ixy="1.399547e-14" ixz="-2.461662e-15" iyy="1.577317e-7" iyz="2.024057e-13" izz="1.101806e-7"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0.005"/>
+      <geometry>
+        <mesh filename="/home/nikos/matlab_ws/modular_dynamixel/pseudo.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="blue">
+        <color rgba="0 0 1 1"/>
+      </material>
+    </visual>
+</link>
+
+  <!-- This is the pseudojoint1 joint angle congiguration -->
+   <!-- 0ref = 3.14 radians y-axis-->
+  <joint name="PseudoConnector1a__PseudoConnector1b" type="fixed">
+    <origin rpy="0 ${final_theta_p_1} 0" xyz="0 0 0.032"/>
+    <parent link="PseudoConnector1a"/>
+    <child link="PseudoConnector1b"/>
+  </joint>
+
+<link name="PseudoConnector1b">
+    <inertial>
+      <origin rpy="0 3.14 0" xyz="0 0 0.00856"/>
+      <mass value ="${pseudo_mass}" />
+      <inertia ixx="1.345843e-07" ixy="1.399547e-14" ixz="-2.461662e-15" iyy="1.577317e-7" iyz="2.024057e-13" izz="1.101806e-7"/>
+    </inertial>
+    <visual>
+      <origin rpy="0 3.14 0" xyz="0 -0.01 0.027"/>
+      <geometry>
+        <mesh filename="/home/nikos/matlab_ws/modular_dynamixel/pseudo.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="red">
+        <color rgba="1 0 0 1"/>
+      </material>
+    </visual>
+</link>
+
+<!-- This joint is parameterized for C10  -->
+  <joint name="PseudoConnector1b__adaptor1" type="fixed">
+    <origin rpy="${Rx10} ${Ry10} ${Rz10}" xyz="${Px10} ${fPy10} ${fPz10}"/>
+    <parent link="PseudoConnector1b"/>
+    <child link="adaptor1"/>
+  </joint>
+
+<link name="adaptor1">
+      <inertial>
+        <origin rpy="0 0 0" xyz="0 0.00132 0"/>
+        <mass value ="0.1" />
+        <inertia ixx="3.5655174315e-07" ixy="3.0094534019e-15" ixz="-3.0659548585e-16" iyy="8.1971725028e-7" iyz="1.0236492333e-16" izz="5.0684999189e-07"/>
+      </inertial>
+      <visual>
+      <origin rpy="1.57 0 0" xyz="0 0 0.003"/>
+      <geometry>
+        <mesh filename="/home/nikos/matlab_ws/modular_dynamixel/FR54_A110.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="silver">
+        <color rgba="0.753 0.753 0.753 0.5"/>
+      </material>
+    </visual>
+</link>
+
+  <joint name="adaptor1__AM1" type="fixed">
+    <origin rpy="0 0 0" xyz="0 0 0.003"/>
+    <parent link="adaptor1"/>
+    <child link="AM1"/>
+  </joint>
+
+<link name="AM1">
+    <inertial>
+      <origin rpy="3.14 0 0" xyz="0 -0.063 0.03"/>
+      <mass value ="0.855" />
+      <inertia ixx="0.0040487283" ixy="0.000016444686" ixz="0.0001418628" iyy="0.0040350489" iyz="-0.0002178358" izz="0.0003489357"/>
+    </inertial>
+    <visual>
+      <origin rpy="3.14 0 0" xyz="0 -0.063 0.030"/>
+      <geometry>
+        <mesh filename="/home/nikos/matlab_ws/modular_dynamixel/H54P-200.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="gray">
+        <color rgba="0.5 0.5 0.5 0.9"/>
+      </material>
+    </visual>
+</link>
+
+  <joint name="AM1__frame1" type="revolute">
+    <origin rpy="0 0 0" xyz="0 -0.069 0.030"/>
+    <parent link="AM1"/>
+    <child link="frame1"/>
+    <axis xyz="0 1 0"/>
+    <limit effort="55" lower="-1.57" upper="1.57" velocity="4.0841"/>
+    <dynamics damping="0.5"/>
+  </joint>
+
+  <link name="frame1">
+    <inertial>
+      <origin rpy="0 0 -1.57" xyz="0 0 0"/>
+      <mass value ="0.3" />
+      <inertia ixx="0.2e-9" ixy="0.1e-11" ixz="0.1e-9" iyy="0.1e-9" iyz="0.2e-12" izz="0.1e-9"/>
+    </inertial>
+    <visual>
+      <origin rpy="1.57 0 0" xyz="0 0.069 0"/>
+      <geometry>
+        <mesh filename="/home/nikos/matlab_ws/modular_dynamixel/FRP54-H221.stl" scale="0.001 0.001 0.001"/>
+      </geometry>
+      <material name="gray">
+        <color rgba="0.5 0.5 0.5 0.9"/>
+      </material>
+    </visual>
+</link>
+
+<joint name="AM1__TOOL" type="fixed">
+    <origin rpy="0 0 0" xyz="0 0.069 0.051"/>
+    <parent link="frame1"/>
+    <child link="TOOL"/>
+</joint>
+
+<link name="TOOL">
+      <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="0.0001"/>
+      <inertia ixx="1.1e-8" ixy="-1.1e-10" ixz="-2.1e-10" iyy="1.1e-8" iyz="-1.1e-10" izz="1.1e-8"/>
+    </inertial>
+</link>
+
+<!-- END -->
+</robot>

@@ -129,11 +129,12 @@ PseudoConnector1b_2 = char(robot3.BodyNames(5)); Ts5_2 = getTransform(robot3,con
 % ti(1) = 'ti';
 % ti(2) = 'tp1';
 % ti(3) = 'ti1';
-ti = [0 0 0]'; % from here i control the 3 angles: 1:active1 2:passive1 3:active2
-Rx01 = 1.5708; Ry01=0; Rz01=0; Px01=0.05; Py01=0.05; Pz01=0.05; % from here i control the 
+ti = [0 1 0]'; % from here i control the 3 angles: 1:active1 2:passive1 3:active2
+Rx01 = 1.5708; Ry01=0.5; Rz01=0.2; Px01=0.1; Py01=-0.05; Pz01=-0.1; % from here i control the 
 % 6 Euler variables of the synthetic joint. These variables are ONLY LOCAL
 % in the frame-PseudoConnector1a. i.e. Describe how "Pseudoconector1a"
-% changes with respect to "frame".
+% changes with respect to "frame". MUST be same with parameters defined in
+% lines 14-20 in kinematic_verification_01.xacro
 
 %% Here i test only metamorphic_joint:PseudoConnector1a__PseudoConnector1b
 % Change only in theta_j with fixed structure. I did it to study the twists
@@ -175,11 +176,6 @@ xi3new = createtwist(w3n,g_sf1(1:3,4)); %ξi+1'
 % xi2n_graph = drawtwist(xi2new); hold on;
 % xi3n_graph = drawtwist(xi3new); hold on;
 
-% Now, extract new relative twists
-xi_j_new = inv(ad(g_fP1a*g_lk_li0))*xi2new;
-xi_i1_new = inv(ad(g_fP1a*g_lk_li0))*xi3new;
-xj_i1_new = inv(ad(g_fP1a*g_lk_lj0))*xi3new;
-
 % After new structure is completed, the active-passive-active expos are
 % constructed as usual
 expi(:,:,1) = twistexp(xi(:,1), ti(1));
@@ -199,9 +195,14 @@ gn(:,:,4) = inv(gn(:,:,1))*gn(:,:,2); % g_li_lj0
 gn_li_lj0 = getTransform(robot3,config3,PseudoConnector1b_2,frame_2);
 gn(:,:,5) = inv(gn(:,:,2))*gn(:,:,3); % g_lj_li10
 gn_lj_li10 = getTransform(robot3,config3,frame1_2,PseudoConnector1b_2);
-
 gn(:,:,6) = inv(gn(:,:,1))*gn(:,:,3); % g_li_li10
-gn_li_li10 = getTransform(robot3,config3,frame1_2,frame_2)
+gn_li_li10 = getTransform(robot3,config3,frame1_2,frame_2);
+
+% Now, extract new relative twists
+xi_j_new = inv(ad(gn(:,:,1)))*xi2new;
+xi_i1_new = inv(ad(gn(:,:,1)))*xi3new;
+xj_i1_new = inv(ad(gn(:,:,2)))*xi3new;
+
 % Here is POE FKM for new structure
 g(:,:,1) = expi(:,:,1)*gn(:,:,1); % g_s_li
 g(:,:,2) = expi(:,:,1)*expi(:,:,2)*gn(:,:,2); % g_s_lj

@@ -6,18 +6,16 @@
 <!-- builds C01: Connection Active-Passive @ /modular_dynamixel/structure_synthesis/C01.urdf-->
 
 <!-- Pseudojoint angles are designated as fixed and user specifies the θp angle! -->
-<xacro:property name="theta_p_1" value="0"/>
+<xacro:property name="theta_p_1" value="1"/>
 <xacro:property name="final_theta_p_1" value="${0+theta_p_1}"/>
-<xacro:property name="theta_p_2" value="0"/>
-<xacro:property name="final_theta_p_2" value="${0+theta_p_2}"/>
 <!-- Metamorphic C01-->
 <xacro:property name="Rx01" value="1.5708"/>
-<xacro:property name="Ry01" value="0"/>
-<xacro:property name="Rz01" value="0"/>
-<xacro:property name="Px01" value="0.05"/>
+<xacro:property name="Ry01" value="0.5"/>
+<xacro:property name="Rz01" value="0.2"/>
+<xacro:property name="Px01" value="0.1"/>
 <xacro:property name="fPx01" value="${0.091+Px01}"/>
-<xacro:property name="Py01" value="0.05"/>
-<xacro:property name="Pz01" value="0.05"/>
+<xacro:property name="Py01" value="-0.05"/>
+<xacro:property name="Pz01" value="-0.1"/>
 <!-- Metamorphic C10-->
 <xacro:property name="Rx10" value="0"/>
 <xacro:property name="Ry10" value="0"/>

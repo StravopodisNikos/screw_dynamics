@@ -15,7 +15,11 @@ addpath('/home/nikos/matlab_ws/kinematics/util')
 addpath('/home/nikos/matlab_ws/project_ABBpaper/matlab_files')
 % load main folder
 addpath('/home/nikos/matlab_ws/modular_dynamixel/')
-
+% load geom3d library
+addpath('/home/nikos/matlab_ws/geom3d')
+addpath('/home/nikos/matlab_ws/geom3d/geom3d')
+addpath('/home/nikos/matlab_ws/geom2d/geom2d')
+addpath('/home/nikos/matlab_ws/geom2d/utils')
 %% Reference anatomy
 % robot urdf is built from: /home/nikos/matlab_ws/modular_dynamixel/kinematic_verification_01.xacro
 [robot1] = importrobot('/home/nikos/matlab_ws/modular_dynamixel/structure_synthesis/C010.urdf'); % with 1 Pseudo 
@@ -129,8 +133,8 @@ PseudoConnector1b_2 = char(robot3.BodyNames(5)); Ts5_2 = getTransform(robot3,con
 % ti(1) = 'ti';
 % ti(2) = 'tp1';
 % ti(3) = 'ti1';
-ti = [0 1 0]'; % from here i control the 3 angles: 1:active1 2:passive1 3:active2
-Rx01 = 1.5708; Ry01=0.5; Rz01=0.2; Px01=0.1; Py01=-0.05; Pz01=-0.1; % from here i control the 
+ti = [0 1.5708 0]'; % from here i control the 3 angles: 1:active1 2:passive1 3:active2
+Rx01 = 1.5708; Ry01=1; Rz01=1; Px01=0.05; Py01=-0.05; Pz01=0.05; % from here i control the 
 % 6 Euler variables of the synthetic joint. These variables are ONLY LOCAL
 % in the frame-PseudoConnector1a. i.e. Describe how "Pseudoconector1a"
 % changes with respect to "frame". MUST be same with parameters defined in
@@ -199,14 +203,15 @@ gn(:,:,6) = inv(gn(:,:,1))*gn(:,:,3); % g_li_li10
 gn_li_li10 = getTransform(robot3,config3,frame1_2,frame_2);
 
 % Now, extract new relative twists
+xs_i_new = inv(ad(eye(4)))*xi(:,1);
 xi_j_new = inv(ad(gn(:,:,1)))*xi2new;
 xi_i1_new = inv(ad(gn(:,:,1)))*xi3new;
 xj_i1_new = inv(ad(gn(:,:,2)))*xi3new;
 
 % Here is POE FKM for new structure
-g(:,:,1) = expi(:,:,1)*gn(:,:,1); % g_s_li
-g(:,:,2) = expi(:,:,1)*expi(:,:,2)*gn(:,:,2); % g_s_lj
-g(:,:,3) = expi(:,:,1)*expi(:,:,2)*expi(:,:,3)*gn(:,:,3); % g_s_li1
+gn1(:,:,1) = expi(:,:,1)*gn(:,:,1); % g_s_li
+gn1(:,:,2) = expi(:,:,1)*expi(:,:,2)*gn(:,:,2); % g_s_lj
+gn1(:,:,3) = expi(:,:,1)*expi(:,:,2)*expi(:,:,3)*gn(:,:,3); % g_s_li1
 
 %% Jacobians
 % g_li_li1_0 = twistexp(xi_i1_0,0)*g0(:,:,6); % IT WORKS SINCE: g_li_li1_0 = g_li_li10
@@ -226,11 +231,11 @@ Js(:,1) = xi(:,1);
 Js(:,2) = ad(expi(:,:,1))*twist_fP1a;
 Js(:,3) = ad(expi(:,:,1)*expi(:,:,2))*xi2new;
 Js(:,4) = ad(expi(:,:,1)*expi(:,:,2)*expi(:,:,3))*xi3new;
-% figure(test2_figure); % for visual evaluation
-% xi_graph = drawtwist(Js(:,1)); hold on;
-% xk_graph = drawtwist(Js(:,2)); hold on;
-% xj_graph = drawtwist(Js(:,3)); hold on;
-% xi1_graph = drawtwist(Js(:,4)); hold on;
+figure(test2_figure); % for visual evaluation
+xi_graph = drawtwist(Js(:,1)); hold on;
+xk_graph = drawtwist(Js(:,2)); hold on;
+xj_graph = drawtwist(Js(:,3)); hold on;
+xi1_graph = drawtwist(Js(:,4)); hold on;
 
 %% Relative POE FKM
 % % This is eq.3.7 since relative twist has been found for reference
@@ -255,70 +260,116 @@ error_g_li_li1_1 = g_li_li1a - g_li_li1_1
 g_s_li_1 = getTransform(robot3,config3,frame_2);
 g_s_li1_1 = getTransform(robot3,config3,frame1_2);
 g_s_lj_1 = getTransform(robot3,config3,PseudoConnector1b_2);
-error_g_s_li = g(:,:,1)-g_s_li_1
-error_g_s_lj = g(:,:,2)-g_s_lj_1
-error_g_s_li1 = g(:,:,3)-g_s_li1_1
+error_g_s_li = gn1(:,:,1)-g_s_li_1
+error_g_s_lj = gn1(:,:,2)-g_s_lj_1
+error_g_s_li1 = gn1(:,:,3)-g_s_li1_1
 
 %% Graphical examination of twists
-% g-> ξ
+% g-> ξ for i->i1
 [xi_i1_abs th_i_i1_abs] = homtotwist(g_li_li1a); % the absolute transformation twist- READS structure change
 g = g_li_li1a*inv(gn(:,:,6));
 [xi_i1_rel th_i_i1_rel] = homtotwist(g); % the relative transformation twist - READS pseudojoint change
-figure(test2_figure); % for visual evaluation
+% g-> ξ for s->i
+[xs_i_abs th_s_i_abs] = homtotwist(gn1(:,:,1));
+g0 = gn1(:,:,1)*inv(gn(:,:,1));
+[xs_i_rel th_s_i_rel] = homtotwist(g0);
+% for visual evaluation
+figure(test2_figure); 
 xi_i1_abs_graph = drawtwist(xi_i1_abs); hold on;
 xi_i1_rel_graph = drawtwist(xi_i1_rel); hold on;
-
 %% up to this for Lefteris GA %%
 
 %% Convert from POE to DH - UNDER DEVELOPMENT
-[DH_i_i1_1] = POE2DH_LiaoWu(xi_i1_abs,[0 0 0 0 1 0]');
-[DH_i_i1_2] = POE2DH_LiaoWu(xi_i1_abs,xi(:,3));
-[DH_i_i1_3] = POE2DH_LiaoWu(xi_i1_abs,Js(:,2));
 
-[DH_i_i1_4] = POE2DH_LiaoWu(xi_i1_rel,[0 0 0 0 1 0]');
-[DH_i_i1_5] = POE2DH_LiaoWu(xi_i1_rel,xi(:,3));
-[DH_i_i1_6] = POE2DH_LiaoWu(xi_i1_rel,Js(:,2)); % this one gives solution
+%% Graphical DH solution
+% create figure for graphical DH representation
+DH_figure = figure;
+figure(DH_figure);
+drawframe(gn1(:,:,1), scale_active); hold on; % gsli
+drawframe(gn1(:,:,3), scale_active); hold on; % gsli1
+xi_graph = drawtwist(Js(:,1)); hold on;
+xi1_graph = drawtwist(Js(:,4)); hold on;
+p1_1 = [xi_graph.XData(1) xi_graph.YData(1) xi_graph.ZData(1) ]';
+p1_2 = [xi_graph.XData(2) xi_graph.YData(2) xi_graph.ZData(2) ]';
+text(p1_2(1), p1_2(2), p1_2(3),'\leftarrow ξ_i'), hold on;
+p2_1 = [xi1_graph.XData(1) xi1_graph.YData(1) xi1_graph.ZData(1) ]';
+p2_2 = [xi1_graph.XData(2) xi1_graph.YData(2) xi1_graph.ZData(2) ]';
+text(p2_2(1), p2_2(2), p2_2(3),'\leftarrow ξ_{i+1}'), hold on;
 
-% [DH_i_i1_7] = POE2DH_LiaoWu(xi_i1_abs*th_i_i1_abs,[0 0 0 0 0 1]');
-% [DH_i_i1_8] = POE2DH_LiaoWu(xi_i1_rel*th_i_i1_rel,[0 0 0 0 0 1]');
+% im1Tx(Lim1) if im1->i or iTx(Li) if i->i1
+[Li, d, Si, Si1] = DistBetween2Segment(p1_1, p1_2, p2_1, p2_2); %[shortestdistance,directionvector,closepointonA,closepointonB] % L2
+plot3([Si(1) Si1(1)],[Si(2) Si1(2)],[Si(3) Si1(3)]), hold on
+
+% im1Rx(aim1) if im1->i or iRx(ai) if i->i1
+% Draw plane vertical to common normal line between axes
+% Plane is created given 1 point and a normal vector.
+plane_for_ai= createPlane(p1_1',d');
+drawPlane3d(plane_for_ai,'facecolor', 'y','facealpha', '0.5'), hold on
+line_of_twist_xi = createLine3d(p1_1', p1_2');
+line_of_twist_xi1 = createLine3d(p2_1', p2_2');
+[projected_line_of_twist_xi1, isOrthogonal] = projLineOnPlane(line_of_twist_xi1, plane_for_ai); % project xi1 in plane creted from xi
+drawLine3d(projected_line_of_twist_xi1)
+ai = angle3Points(line_of_twist_xi(4:6), Si', projected_line_of_twist_xi1(4:6)); % a2
+
+% iTz(di) if im1->i or i1Tz(di1) if i->i1
+di1_0 = gn1(3,4,1) + distancePoints3d( [gn1(1,4,1) gn1(2,4,1) gn1(3,4,1)] , Si' ); % d1
+
+di1 = distancePoints3d( [gn1(1,4,3) gn1(2,4,3) gn1(3,4,3)] , Si1' ); % d2
+
+% DH Matrix for synthetic_joint = as specifid and ti = [0 1.5708 0]
+%       |  Li   |  ai   |  di1  |  thi
+%       |  0    |  0    |  d1   |  th1+0   
+%       |  L2   |  a2   |  d2   |  th2+0 
+[zeroM1] = ModifiedDHmatrix(0,0,0,di1_0);
+[oneMi] = ModifiedDHmatrix(0,ai,Li,di1);
+DHtf = zeroM1*oneMi; % must be equal with gn1(:,:,3)
+
+%% Analytical DH calculation from POE
+[DH_i_i1_2] =  POE2DH_LiaoWu(xi_i1_abs,Js(:,3));
+[DH_i_i1_3] = POE2DH_LiaoWu(xi_i1_abs,Js(:,4));
+
+[DH_i_i1_5] = POE2DH_LiaoWu(xi_i1_rel,Js(:,3));
+[DH_i_i1_6] = POE2DH_LiaoWu(xi_i1_rel,Js(:,4));
+
+% [DH_i_i1_6] = POE2DH_LiaoWu(Js(:,1),Js(:,4)); % this one gives solution
 
 % Solve system
 syms aim1 Lim1 di thi
-% Solution of System 1
-sol_thi = solve(DH_i_i1_1(4),thi); field1 = 'thi';  value1 = sol_thi;
-sol_aim1 = solve(DH_i_i1_1(5),aim1); sol_aim1 = subs(sol_aim1,'thi',sol_thi); field2 = 'aim1';  value2 = sol_aim1;
-sol_di = solve(DH_i_i1_1(1),di); sol_di = subs(sol_di,{'thi','aim1'},{sol_thi,sol_aim1}); field3 = 'di';  value3 = sol_di;
-sol_Lim1 = solve(DH_i_i1_1(3),Lim1); sol_Lim1 = subs(sol_Lim1,{'thi','aim1','di'},{sol_thi,sol_aim1,sol_di}); field4 = 'Lim1';  value4 = sol_Lim1;
-sol_sys1 = struct(field1,value1,field2,value2,field3,value3,field4,value4);
+% % Solution of System 1
+% sol_thi = solve(DH_i_i1_1(4),thi); field1 = 'thi';  value1 = sol_thi;
+% sol_aim1 = solve(DH_i_i1_1(5),aim1); sol_aim1 = subs(sol_aim1,'thi',sol_thi); field2 = 'aim1';  value2 = sol_aim1;
+% sol_di = solve(DH_i_i1_1(1),di); sol_di = subs(sol_di,{'thi','aim1'},{sol_thi,sol_aim1}); field3 = 'di';  value3 = sol_di;
+% sol_Lim1 = solve(DH_i_i1_1(3),Lim1); sol_Lim1 = subs(sol_Lim1,{'thi','aim1','di'},{sol_thi,sol_aim1,sol_di}); field4 = 'Lim1';  value4 = sol_Lim1;
+% sol_sys1 = struct(field1,value1,field2,value2,field3,value3,field4,value4);
 % Solution of System 2
 sol_thi = solve(DH_i_i1_2(4),thi); field1 = 'thi';  value1 = sol_thi;
 sol_aim1 = solve(DH_i_i1_2(5),aim1); sol_aim1 = subs(sol_aim1,'thi',sol_thi); field2 = 'aim1';  value2 = sol_aim1;
-sol_di = solve(DH_i_i1_2(1),di); sol_di = subs(sol_di,{'thi','aim1'},{sol_thi,sol_aim1}); field3 = 'di';  value3 = sol_di;
-sol_Lim1 = solve(DH_i_i1_2(3),Lim1); sol_Lim1 = subs(sol_Lim1,{'thi','aim1','di'},{sol_thi,sol_aim1,sol_di}); field4 = 'Lim1';  value4 = sol_Lim1;
+sol_di = solve(DH_i_i1_2(1),di); sol_di = subs(sol_di,{'thi','aim1'},{sol_thi,sol_aim1(1)}); field3 = 'di';  value3 = sol_di;
+sol_Lim1 = solve(DH_i_i1_2(3),Lim1); sol_Lim1 = subs(sol_Lim1,{'thi','aim1','di'},{sol_thi,sol_aim1(1),sol_di(1)}); field4 = 'Lim1';  value4 = sol_Lim1;
 sol_sys2 = struct(field1,value1,field2,value2,field3,value3,field4,value4);
 % Solution of System 3
 sol_thi = solve(DH_i_i1_3(4),thi); field1 = 'thi';  value1 = sol_thi;
 sol_aim1 = solve(DH_i_i1_3(5),aim1); sol_aim1 = subs(sol_aim1,'thi',sol_thi); field2 = 'aim1';  value2 = sol_aim1;
-sol_di = solve(DH_i_i1_3(1),di); sol_di = subs(sol_di,{'thi','aim1'},{sol_thi,sol_aim1}); field3 = 'di';  value3 = sol_di;
-sol_Lim1 = solve(DH_i_i1_3(3),Lim1); sol_Lim1 = subs(sol_Lim1,{'thi','aim1','di'},{sol_thi,sol_aim1,sol_di}); field4 = 'Lim1';  value4 = sol_Lim1;
+sol_di = solve(DH_i_i1_3(1),di); sol_di = subs(sol_di,{'thi','aim1'},{sol_thi,sol_aim1(1)}); field3 = 'di';  value3 = sol_di;
+sol_Lim1 = solve(DH_i_i1_3(3),Lim1); sol_Lim1 = subs(sol_Lim1,{'thi','aim1','di'},{sol_thi,sol_aim1(1),sol_di(1)}); field4 = 'Lim1';  value4 = sol_Lim1;
 sol_sys3 = struct(field1,value1,field2,value2,field3,value3,field4,value4);
-% Solution of System 4
-sol_thi = solve(DH_i_i1_4(4),thi); field1 = 'thi';  value1 = sol_thi;
-sol_aim1 = solve(DH_i_i1_4(5),aim1); sol_aim1 = subs(sol_aim1,'thi',sol_thi); field2 = 'aim1';  value2 = sol_aim1;
-sol_di = solve(DH_i_i1_4(1),di); sol_di = subs(sol_di,{'thi','aim1'},{sol_thi,sol_aim1}); field3 = 'di';  value3 = sol_di;
-sol_Lim1 = solve(DH_i_i1_4(3),Lim1); sol_Lim1 = subs(sol_Lim1,{'thi','aim1','di'},{sol_thi,sol_aim1,sol_di}); field4 = 'Lim1';  value4 = sol_Lim1;
-sol_sys4 = struct(field1,value1,field2,value2,field3,value3,field4,value4);
+% % Solution of System 4
+% sol_thi = solve(DH_i_i1_4(4),thi); field1 = 'thi';  value1 = sol_thi;
+% sol_aim1 = solve(DH_i_i1_4(5),aim1); sol_aim1 = subs(sol_aim1,'thi',sol_thi); field2 = 'aim1';  value2 = sol_aim1;
+% sol_di = solve(DH_i_i1_4(1),di); sol_di = subs(sol_di,{'thi','aim1'},{sol_thi,sol_aim1}); field3 = 'di';  value3 = sol_di;
+% sol_Lim1 = solve(DH_i_i1_4(3),Lim1); sol_Lim1 = subs(sol_Lim1,{'thi','aim1','di'},{sol_thi,sol_aim1,sol_di}); field4 = 'Lim1';  value4 = sol_Lim1;
+% sol_sys4 = struct(field1,value1,field2,value2,field3,value3,field4,value4);
 % Solution of System 5
 sol_thi = solve(DH_i_i1_5(4),thi); field1 = 'thi';  value1 = sol_thi;
 sol_aim1 = solve(DH_i_i1_5(5),aim1); sol_aim1 = subs(sol_aim1,'thi',sol_thi); field2 = 'aim1';  value2 = sol_aim1;
-sol_di = solve(DH_i_i1_5(1),di); sol_di = subs(sol_di,{'thi','aim1'},{sol_thi,sol_aim1}); field3 = 'di';  value3 = sol_di;
-sol_Lim1 = solve(DH_i_i1_5(3),Lim1); sol_Lim1 = subs(sol_Lim1,{'thi','aim1','di'},{sol_thi,sol_aim1,sol_di}); field4 = 'Lim1';  value4 = sol_Lim1;
+sol_di = solve(DH_i_i1_5(1),di); sol_di = subs(sol_di,{'thi','aim1'},{sol_thi,sol_aim1(1)}); field3 = 'di';  value3 = sol_di;
+sol_Lim1 = solve(DH_i_i1_5(3),Lim1); sol_Lim1 = subs(sol_Lim1,{'thi','aim1','di'},{sol_thi,sol_aim1(1),sol_di}); field4 = 'Lim1';  value4 = sol_Lim1;
 sol_sys5 = struct(field1,value1,field2,value2,field3,value3,field4,value4);
 % Solution of System 6
 sol_thi = solve(DH_i_i1_6(4),thi); field1 = 'thi';  value1 = sol_thi;
 sol_aim1 = solve(DH_i_i1_6(5),aim1); sol_aim1 = subs(sol_aim1,'thi',sol_thi); field2 = 'aim1';  value2 = sol_aim1;
-sol_di = solve(DH_i_i1_6(1),di); sol_di = subs(sol_di,{'thi','aim1'},{sol_thi,sol_aim1}); field3 = 'di';  value3 = sol_di;
-sol_Lim1 = solve(DH_i_i1_6(3),Lim1); sol_Lim1 = subs(sol_Lim1,{'thi','aim1','di'},{sol_thi,sol_aim1,sol_di}); field4 = 'Lim1';  value4 = sol_Lim1;
+sol_di = solve(DH_i_i1_6(1),di); sol_di = subs(sol_di,{'thi','aim1'},{sol_thi,sol_aim1(1)}); field3 = 'di';  value3 = sol_di;
+sol_Lim1 = solve(DH_i_i1_6(3),Lim1); sol_Lim1 = subs(sol_Lim1,{'thi','aim1','di'},{sol_thi,sol_aim1(1),sol_di}); field4 = 'Lim1';  value4 = sol_Lim1;
 sol_sys6 = struct(field1,value1,field2,value2,field3,value3,field4,value4);
 % % % Solution of System 7
 % % % sol_thi = solve(DH_i_i1_7(4),thi); field1 = 'thi';  value1 = sol_thi; %
@@ -333,3 +384,8 @@ sol_sys6 = struct(field1,value1,field2,value2,field3,value3,field4,value4);
 % % sol_di = solve(DH_i_i1_8(1),di); sol_di = subs(sol_di,{'thi','aim1'},{sol_thi,sol_aim1}); field3 = 'di';  value3 = sol_di;
 % % sol_Lim1 = solve(DH_i_i1_8(3),Lim1); sol_Lim1 = subs(sol_Lim1,{'thi','aim1','di'},{sol_thi,sol_aim1,sol_di}); field4 = 'Lim1';  value4 = sol_Lim1;
 % % sol_sys8 = struct(field1,value1,field2,value2,field3,value3,field4,value4);
+
+%% save data
+a = fopen('sol_sys5_Lim1.txt','w');
+fprintf(a,'%s\n',char(sol_sys5.Lim(1)));
+fclose(a);

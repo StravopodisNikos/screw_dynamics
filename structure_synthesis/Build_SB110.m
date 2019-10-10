@@ -18,9 +18,11 @@ exp_wmegaR = skewexp(wmegaR,thetaR); % ==R_fP1a ALWAYS the same
 %  find twist of synthetic joint_it is "equivalent to the reference" since
 %  twist must be built for reference structure
 xi_lk = createtwist(wmegaR,[Sim1.Cg(1,4)+Px01 Sim1.Cg(2,4)+Py01 Sim1.Cg(3,4)+Pz01]'); %ξk
-exp_lk = twistexp(xi_lk,thetaR);
-g_slk = exp_lk*Sim1.Cg; % this is the new g-s-lk after synthetic tf changes aka % this is SE(3) element that represents 
-% the rigid motion of the structure change induced by synthetic_joint:frame_PseudoConnector1a
+g_slk = [exp_wmegaR [Sim1.Cg(1,4)+Px01 Sim1.Cg(2,4)+Py01 Sim1.Cg(3,4)+Pz01]'; 0 0 0 1  ];
+
+% % exp_lk = twistexp(xi_lk,thetaR);
+% % g_slk = exp_lk*Sim1.Cg; % this is the new g-s-lk after synthetic tf changes aka % this is SE(3) element that represents 
+% % % the rigid motion of the structure change induced by synthetic_joint:frame_PseudoConnector1a
 
 % g_fP1a = [exp_wmegaR [Sim1.Cg(1,4)+Px01 Sim1.Cg(2,4)+Py01 Sim1.Cg(3,4)+Pz01]'; 0 0 0 1];
 % [twist_g_fP1a theta_g_fP1a] = homtotwist(g_fP1a); % this is SE(3) element that represents 
@@ -76,11 +78,11 @@ if SBn==2
     gni1 = exp1*expj1*expj2*expi1*gn(:,:,3); % g_s_li1
 elseif SBn==3
     % we must check what n.2 was
-    if length(Sim1.expi)==3 % => previous was SB110
+    if size(Sim1.expi,3)==3 % => previous was SB110
         gnj1 = exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*Sim1.expi(:,:,3)*expj1*gn(:,:,1);
         gnj2 = exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*Sim1.expi(:,:,3)*expj1*expj2*gn(:,:,2);
         gni1 = exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*Sim1.expi(:,:,3)*expj1*expj2*expi1*gn(:,:,3);
-    elseif length(Sim1.expi)==2 % => previous was SB10
+    elseif size(Sim1.expi,3)==2 % => previous was SB10
         gnj1 = exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*expj1*gn(:,:,1);
         gnj2 = exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*expj1*expj2*gn(:,:,1);
         gni1 = exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*expj1*expj2*expi1*gn(:,:,3);        
@@ -88,7 +90,7 @@ elseif SBn==3
 end
 gsn(:,:,1) = gnj1;
 gsn(:,:,2) = gnj2;
-gsn(:,:,3) = gni1;
+gsn(:,:,3) = gni1
 %% Relative POE FKM
 g_li_li1 = twistexp(xi_j1_new,ti(2))*gn(:,:,4)*twistexp(xj1_j2_new,ti(3))*gn(:,:,5)*twistexp(xj2_i1_new,ti(4))*gn(:,:,6);
 %% Relative twists
@@ -103,12 +105,12 @@ if SBn==2 % ok for 10
     Js(:,3) = ad(exp1*expj1)*xj2n;
     Js(:,4) = ad(exp1*expj1*expj2)*xi1n;
 elseif SBn==3 % not yet here
-    if length(Sim1.expi)==3 % => previous was SB110
+    if size(Sim1.expi,3)==3 % => previous was SB110
         Js(:,1) = ad(exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*Sim1.expi(:,:,3))*xi_lk;
         Js(:,2) = ad(exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*Sim1.expi(:,:,3))*xj1n;
         Js(:,3) = ad(exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*Sim1.expi(:,:,3)*expj1)*xj2n;
         Js(:,4) = ad(exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*Sim1.expi(:,:,3)*expj1*expj2)*xi1n;
-    elseif length(Sim1.expi)==2 % => previous was SB10
+    elseif size(Sim1.expi,3)==2 % => previous was SB10
         Js(:,1) = ad(exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2))*xi_lk;
         Js(:,2) = ad(exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2))*xj1n;
         Js(:,3) = ad(exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*expj1)*xj2n;
@@ -122,8 +124,10 @@ xj1_graph = drawtwist(Js(:,2)); hold on;
 xj2_graph = drawtwist(Js(:,3)); hold on;
 xi1_graph = drawtwist(Js(:,3)); hold on;
 
+% % Js
+% % g_li_li1
 %% Build OUTPUT struct
-f1 = 'g0'; v1 = gni;
+f1 = 'g0'; v1 = gni1;
 f2 = 'Cg'; v2 = NEW_S_FRAME; %
 f3 = 'expi'; v3 = exp_for_struct;
 f4 = 'xi'; v4 = Xi_for_struct;

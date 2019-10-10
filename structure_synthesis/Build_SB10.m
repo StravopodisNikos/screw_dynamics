@@ -44,7 +44,7 @@ gn(:,:,3) = inv(Sim1.g0)*gn(:,:,1); % g_li_lj0
 gn(:,:,4) = inv(gn(:,:,1))*gn(:,:,2); % g_lj_li10
 gn(:,:,5) = inv(Sim1.g0)*gn(:,:,2); % g_li_li10
 
-NEW_S_FRAME = g_slk*Si0.Cg; % new {s} frame for next body is the gst of previous set of SBs'
+NEW_t0_FRAME = g_slk*Si0.Cg; % new {s} frame for next body only for synthetic change aka gs(0)
 
 % Now, extract new relative twists
 xi_j_new = inv(ad(Sim1.g0))*xjn;
@@ -64,14 +64,17 @@ exp_for_struct(:,:,2) = expi;
 if SBn==2
     gnj = exp1*expj*gn(:,:,1); % g_s_lj
     gni = exp1*expj*expi*gn(:,:,2); % g_s_li1
+    gnst = exp1*expj*expi*NEW_t0_FRAME;
 elseif SBn==3
     % we must check what n.2 was
     if size(Sim1.expi,3)==3 % => previous was SB110
         gnj = exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*Sim1.expi(:,:,3)*expj*gn(:,:,1);
         gni = exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*Sim1.expi(:,:,3)*expj*expi*gn(:,:,2);
+        gnst = exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*Sim1.expi(:,:,3)*expj*expi*NEW_t0_FRAME;
     elseif size(Sim1.expi,3)==2 % => previous was SB10
         gnj = exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*expj*gn(:,:,1);
-        gni = exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*expj*expi*gn(:,:,2);        
+        gni = exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*expj*expi*gn(:,:,2);
+        gnst = exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*expj*expi*NEW_t0_FRAME;
     end
 end
 gsn(:,:,1) = gnj;
@@ -109,10 +112,10 @@ xi1_graph = drawtwist(Js(:,3)); hold on;
 % % g_li_li1
 %% Build OUTPUT struct
 f1 = 'g0'; v1 = gni;
-f2 = 'Cg'; v2 = NEW_S_FRAME; %
+f2 = 'Cg'; v2 = NEW_t0_FRAME; %
 f3 = 'expi'; v3 = exp_for_struct;
 f4 = 'xi'; v4 = Xi_for_struct;
-f5 = 'Sframe'; v5 = NEW_S_FRAME;
+f5 = 'Sframe'; v5 = NEW_t0_FRAME;
 f6 = 'Js'; v6 = Js;
 Si = struct(f1,v1,f2,v2,f3,v3,f4,v4,f5,v5,f6,v6);
 end

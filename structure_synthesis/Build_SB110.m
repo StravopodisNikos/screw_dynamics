@@ -51,7 +51,7 @@ gn(:,:,7) = inv(Sim1.g0)*gn(:,:,3); % gn_li_li10
 gn(:,:,8) = inv(Sim1.g0)*gn(:,:,2); % gn_li_lj20
 gn(:,:,9) = inv(gn(:,:,1))*gn(:,:,3); % gn_lj1_li10
 
-NEW_S_FRAME = g_slk*Si0.Cg; % new {s} frame for next body is the gst of previous set of SBs'
+NEW_t0_FRAME = g_slk*Si0.Cg; % new {s} frame for next body is the gst of previous set of SBs'
 
 % Now, extract new relative twists
 xi_j1_new = inv(ad(Sim1.g0))*xj1n; 
@@ -76,21 +76,24 @@ if SBn==2
     gnj1 = exp1*expj1*gn(:,:,1); % g_s_lj1
     gnj2 = exp1*expj1*expj2*gn(:,:,2); % g_s_lj1
     gni1 = exp1*expj1*expj2*expi1*gn(:,:,3); % g_s_li1
+    gnst = exp1*expj1*expj2*expi1*NEW_t0_FRAME;
 elseif SBn==3
     % we must check what n.2 was
     if size(Sim1.expi,3)==3 % => previous was SB110
         gnj1 = exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*Sim1.expi(:,:,3)*expj1*gn(:,:,1);
         gnj2 = exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*Sim1.expi(:,:,3)*expj1*expj2*gn(:,:,2);
         gni1 = exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*Sim1.expi(:,:,3)*expj1*expj2*expi1*gn(:,:,3);
+        gnst = exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*Sim1.expi(:,:,3)*expj1*expj2*expi1*NEW_t0_FRAME;
     elseif size(Sim1.expi,3)==2 % => previous was SB10
         gnj1 = exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*expj1*gn(:,:,1);
         gnj2 = exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*expj1*expj2*gn(:,:,1);
-        gni1 = exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*expj1*expj2*expi1*gn(:,:,3);        
+        gni1 = exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*expj1*expj2*expi1*gn(:,:,3);
+        gnst = exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*expj1*expj2*expi1*NEW_t0_FRAME;
     end
 end
 gsn(:,:,1) = gnj1;
 gsn(:,:,2) = gnj2;
-gsn(:,:,3) = gni1
+gsn(:,:,3) = gni1;
 %% Relative POE FKM
 g_li_li1 = twistexp(xi_j1_new,ti(2))*gn(:,:,4)*twistexp(xj1_j2_new,ti(3))*gn(:,:,5)*twistexp(xj2_i1_new,ti(4))*gn(:,:,6);
 %% Relative twists
@@ -128,10 +131,10 @@ xi1_graph = drawtwist(Js(:,3)); hold on;
 % % g_li_li1
 %% Build OUTPUT struct
 f1 = 'g0'; v1 = gni1;
-f2 = 'Cg'; v2 = NEW_S_FRAME; %
+f2 = 'Cg'; v2 = NEW_t0_FRAME; %
 f3 = 'expi'; v3 = exp_for_struct;
 f4 = 'xi'; v4 = Xi_for_struct;
-f5 = 'Sframe'; v5 = NEW_S_FRAME;
+f5 = 'Sframe'; v5 = NEW_t0_FRAME; %This is the new s(i)->t(i-1) frame only for synthetic config
 f6 = 'Js'; v6 = Js;
 Si = struct(f1,v1,f2,v2,f3,v3,f4,v4,f5,v5,f6,v6);
 end

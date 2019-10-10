@@ -18,9 +18,11 @@ exp_wmegaR = skewexp(wmegaR,thetaR); % ==R_fP1a ALWAYS the same
 %  find twist of synthetic joint_it is "equivalent to the reference" since
 %  twist must be built for reference structure
 xi_lk = createtwist(wmegaR,[Sim1.Cg(1,4)+Px01 Sim1.Cg(2,4)+Py01 Sim1.Cg(3,4)+Pz01]'); %ξk
-exp_lk = twistexp(xi_lk,thetaR);
-g_slk = exp_lk*Sim1.Cg; % this is the new g-s-lk after synthetic tf changes aka % this is SE(3) element that represents 
-% the rigid motion of the structure change induced by synthetic_joint:frame_PseudoConnector1a
+g_slk = [exp_wmegaR [Sim1.Cg(1,4)+Px01 Sim1.Cg(2,4)+Py01 Sim1.Cg(3,4)+Pz01]'; 0 0 0 1  ];
+
+% % exp_lk = twistexp(xi_lk,thetaR);
+% % g_slk = exp_lk*Sim1.Cg; % this is the new g-s-lk after synthetic tf changes aka % this is SE(3) element that represents 
+% % % the rigid motion of the structure change induced by synthetic_joint:frame_PseudoConnector1a
 
 % g_fP1a = [exp_wmegaR [Sim1.Cg(1,4)+Px01 Sim1.Cg(2,4)+Py01 Sim1.Cg(3,4)+Pz01]'; 0 0 0 1];
 % [twist_g_fP1a theta_g_fP1a] = homtotwist(g_fP1a); % this is SE(3) element that represents 
@@ -75,7 +77,7 @@ end
 gsn(:,:,1) = gnj;
 gsn(:,:,2) = gni;
 %% Relative POE FKM
-g_li_li1 = twistexp(xi_j_new,ti(1))*gn(:,:,3)*twistexp(xj_i1_new,ti(2))*gn(:,:,4); % for synthetic+metamorphic
+g_li_li1 = twistexp(xi_j_new,ti(2))*gn(:,:,3)*twistexp(xj_i1_new,ti(3))*gn(:,:,4); % for synthetic+metamorphic
 %% Relative twists
 [xi_i1_abs th_i_i1_abs] = homtotwist(g_li_li1); % the absolute transformation twist- READS structure change
 g = g_li_li1*inv(gn(:,:,5));
@@ -103,6 +105,8 @@ xk_graph = drawtwist(Js(:,1)); hold on;
 xj_graph = drawtwist(Js(:,2)); hold on;
 xi1_graph = drawtwist(Js(:,3)); hold on;
 
+% % Js
+% % g_li_li1
 %% Build OUTPUT struct
 f1 = 'g0'; v1 = gni;
 f2 = 'Cg'; v2 = NEW_S_FRAME; %

@@ -7,10 +7,6 @@ function [Si] = Build_SB10(Sim1,Si0,R,P,SBn,p2fig,ti,Xi1)
 %        as default in zero state
 % OUTPUT: 1. Si(Built_struct_SB10) that contains new twists and NEW zero tfs
 %        of the current STRUCTURAL BLOCK
-%        Si.gsli is the new zero tf of active joint
-%        Si.expi(:,:,2) for j,i twists
-%        Si.Xi is the new active, synthetic and pseudo twists
-%        Si.Js
 
 %% Synthetic Joint is parameterized to exponential
 Rx01 = R(1); Ry01 = R(2); Rz01 = R(3);
@@ -68,10 +64,10 @@ if SBn==2
     gni = exp1*expj*expi*gn(:,:,2); % g_s_li1
 elseif SBn==3
     % we must check what n.2 was
-    if length(Sim1.expi)==3 % => previous was SB110
+    if size(Sim1.expi,3)==3 % => previous was SB110
         gnj = exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*Sim1.expi(:,:,3)*expj*gn(:,:,1);
         gni = exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*Sim1.expi(:,:,3)*expj*expi*gn(:,:,2);
-    elseif length(Sim1.expi)==2 % => previous was SB10
+    elseif size(Sim1.expi,3)==2 % => previous was SB10
         gnj = exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*expj*gn(:,:,1);
         gni = exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*expj*expi*gn(:,:,2);        
     end
@@ -86,16 +82,16 @@ g = g_li_li1*inv(gn(:,:,5));
 [xi_i1_rel th_i_i1_rel] = homtotwist(g); % the relative transformation twist - READS pseudojoint change
 
 %% Spatial Jacobian
-if SBn==2
+if SBn==2 % ok for 10
     Js(:,1) = ad(exp1)*xi_lk;
     Js(:,2) = ad(exp1)*xjn;
     Js(:,3) = ad(exp1*expj)*xi1n;
-elseif SBn==3
-    if length(Sim1.expi)==3 % => previous was SB110
+elseif SBn==3 % not yet here
+    if size(Sim1.expi,3)==3 % => previous was SB110
         Js(:,1) = ad(exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*Sim1.expi(:,:,3))*xi_lk;
         Js(:,2) = ad(exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*Sim1.expi(:,:,3))*xjn;
         Js(:,3) = ad(exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*Sim1.expi(:,:,3)*expj)*xi1n;
-    elseif length(Sim1.expi)==2 % => previous was SB10
+    elseif size(Sim1.expi,3)==2 % => previous was SB10
         Js(:,1) = ad(exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2))*xi_lk;
         Js(:,2) = ad(exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2))*xjn;
         Js(:,3) = ad(exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*expj)*xi1n;
@@ -108,7 +104,7 @@ xj_graph = drawtwist(Js(:,2)); hold on;
 xi1_graph = drawtwist(Js(:,3)); hold on;
 
 %% Build OUTPUT struct
-f1 = 'g0'; v1 = gsn;
+f1 = 'g0'; v1 = gni;
 f2 = 'Cg'; v2 = NEW_S_FRAME; %
 f3 = 'expi'; v3 = exp_for_struct;
 f4 = 'xi'; v4 = Xi_for_struct;

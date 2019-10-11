@@ -1,6 +1,4 @@
-clear;
-clc;
-close all;
+function [g,Js] = kinematic_verification_S010110(point2figure)
 
 %% load libraries
 % load Murray kinematics
@@ -16,8 +14,6 @@ addpath('/home/nikos/matlab_ws/geom3d')
 addpath('/home/nikos/matlab_ws/geom3d/geom3d')
 addpath('/home/nikos/matlab_ws/geom2d/geom2d')
 addpath('/home/nikos/matlab_ws/geom2d/utils')
-
-point2figure = figure;
 
 %% load zero data for STRUCTURAL BLOCKS
 % data are obtained by .m files:
@@ -115,15 +111,15 @@ switch structure(2,:) % WORKS for everything
     case 'xSB10'
         t10 = [1.5708 0]';
         n = 2; % Structural Block number
-        R1 = [1 1 1]; % normally ga gives them
-        P1 = [0.05 0 0.05]; % normally ga gives them
-        [S2] = Build_SB10(s1,s2,R1,P1,n,point2figure,[t0; t10],x1);
+        R1 = [0 0 0]; % normally ga gives them
+        P1 = [0 0 0]; % normally ga gives them
+        [S2] = Build_SB10(s1,s2,R1,P1,n,point2figure,[t0; t10],x1,g_s_lk1_0);
     case 'SB110'
-        t110 = [1.5708 1.55708 0]';
+        t110 = [0 0 0]';
         n = 2; % Structural Block number
-        R1 = [1 1 1]; % normally ga gives them
-        P1 = [0.05 0 0.05]; % normally ga gives them
-        [S2] = Build_SB110(s1,s3,R1,P1,n,point2figure,[t0; t110],x1);
+        R1 = [0 0 0]; % normally ga gives them
+        P1 = [0 0 0]; % normally ga gives them
+        [S2] = Build_SB110(s1,s3,R1,P1,n,point2figure,[t0; t110],x1,g_s_lk1_0);
     otherwise
         warning('Unexpected structural block entered!')
 end
@@ -138,16 +134,18 @@ switch structure(3,:)
         n = 3; % Structural Block number
         R2 = [0 0 0]; % normally ga gives them
         P2 = [0 0 0]; % normally ga gives them
-        [S3] = Build_SB10(S2,s2,R2,P2,n,point2figure,[t0; t10],x1);
+        [S3] = Build_SB10(S2,s2,R2,P2,n,point2figure,[t0; t10],x1,g_s_lk1_0);
     case 'SB110'
-        t110 = [0 0 0]';
-        n = 2; % Structural Block number
-        R1 = [0 0 0]; % normally ga gives them
-        P1 = [0 0 0]; % normally ga gives them
-        [S3] = Build_SB110(S2,s3,R1,P1,n,point2figure,[t0; t110],x1);
+        t110 = [1.5708 1.5708 0]';
+        n = 3; % Structural Block number
+        R2 = [0 0 0]; % normally ga gives them
+        P2 = [0 0 0]; % normally ga gives them
+        [S3] = Build_SB110(S2,s3,R2,P2,n,point2figure,[t0; t110],x1,g_s_lk1_0);
     otherwise
         warning('Unexpected structural block entered!')
 end
-
-%% Form Metamorphic Manipulator Structure Kinematics and Jacobians
-a=1;
+g(:,:,1) = S2.fkm(:,:,2);
+g(:,:,2) = S3.fkm(:,:,3);
+Js(:,1) = x1; %xa1
+Js(:,2:3) = S2.Js(:,2:3); % xp1, xa2
+Js(:,4:6) = S3.Js(:,2:4); % xp23, xa3

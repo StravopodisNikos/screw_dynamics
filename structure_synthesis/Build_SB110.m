@@ -29,10 +29,9 @@ elseif SBn ==3
     g_slk_loc = [exp_wmegaR [Px01 Py01 Pz01]'; 0 0 0 1  ];    
     % OR    
 %     xi_lk = createtwist(wmegaR,[g_s_lk2_0(1,4)+Px01 g_s_lk2_0(2,4)+Py01 g_s_lk2_0(3,4)+Pz01]'); %ξk
-    xi_lk = createtwist(wmegaR,[Px01 Py01 Pz01]'); %ξk    
-    exp_lk = twistexp(xi_lk,thetaR);
-    
-    g_slk = Sim1.Rk*Si0.Cg*g_slk_loc; % must=gslk2
+%     xi_lk = createtwist(wmegaR,[Px01 Py01 Pz01]'); %ξk    
+    g_slk = Sim1.Rk*g_slk_loc;
+    [xi_lk theta_xi_lk] = homtotwist(g_slk);
 end
 
 % % exp_lk = twistexp(xi_lk,thetaR);
@@ -43,7 +42,9 @@ end
 % [twist_g_fP1a theta_g_fP1a] = homtotwist(g_fP1a); % this is SE(3) element that represents 
 % % the rigid motion of the structure change induced by synthetic_joint:frame_PseudoConnector1a
 
-% The twists of SB10 are re-calculated due to Synthetic Joint
+% The twists of SB110 are re-calculated due to Synthetic Joint
+% We take the overall ROTATION inc=duced by previous tfs
+exp_wmegaR = g_slk(1:3,1:3);
 wj1n = exp_wmegaR*Si0.wi(:,1); g_sP1b = g_slk*Si0.g0(:,:,7);
 xj1n = createtwist(wj1n,g_sP1b(1:3,4)); %ξj1'
 wj2n = exp_wmegaR*Si0.wi(:,2); g_sP2b = g_slk*Si0.g0(:,:,7)*Si0.g0(:,:,8);
@@ -89,25 +90,37 @@ exp_for_struct(:,:,1) = expj1;
 exp_for_struct(:,:,2) = expj2;
 exp_for_struct(:,:,3) = expi1;
 
-% Here is POE FKM for new structure
+% Here is POE FKM for new structure only joints AFTER g_slk are considerd!
 % ONLY for 3DOF
 if SBn==2
-    gnj1 = exp1*expj1*gn(:,:,1); % g_s_lj1
-    gnj2 = exp1*expj1*expj2*gn(:,:,2); % g_s_lj1
-    gni1 = exp1*expj1*expj2*expi1*gn(:,:,3); % g_s_li1
-    gnst = exp1*expj1*expj2*expi1*NEW_t0_FRAME;
+%     gnj1 = exp1*expj1*gn(:,:,1); % g_s_lj1
+%     gnj2 = exp1*expj1*expj2*gn(:,:,2); % g_s_lj2
+%     gni1 = exp1*expj1*expj2*expi1*gn(:,:,3); % g_s_li1
+%     gnst = exp1*expj1*expj2*expi1*NEW_t0_FRAME;
+    gnj1 = expj1*gn(:,:,1); % g_s_lj1
+    gnj2 = expj1*expj2*gn(:,:,2); % g_s_lj2
+    gni1 = expj1*expj2*expi1*gn(:,:,3); % g_s_li1
+    gnst = expj1*expj2*expi1*NEW_t0_FRAME;
 elseif SBn==3
-    % we must check what n.2 was
+    %
     if size(Sim1.expi,3)==3 % => previous was SB110
-        gnj1 = exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*Sim1.expi(:,:,3)*expj1*gn(:,:,1);
-        gnj2 = exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*Sim1.expi(:,:,3)*expj1*expj2*gn(:,:,2);
-        gni1 = exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*Sim1.expi(:,:,3)*expj1*expj2*expi1*gn(:,:,3);
-        gnst = exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*Sim1.expi(:,:,3)*expj1*expj2*expi1*NEW_t0_FRAME;
+%         gnj1 = exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*Sim1.expi(:,:,3)*expj1*gn(:,:,1);
+%         gnj2 = exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*Sim1.expi(:,:,3)*expj1*expj2*gn(:,:,2);
+%         gni1 = exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*Sim1.expi(:,:,3)*expj1*expj2*expi1*gn(:,:,3);
+%         gnst = exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*Sim1.expi(:,:,3)*expj1*expj2*expi1*NEW_t0_FRAME;
+        gnj1 = expj1*gn(:,:,1);
+        gnj2 = expj1*expj2*gn(:,:,2);
+        gni1 = expj1*expj2*expi1*gn(:,:,3);
+        gnst = expj1*expj2*expi1*NEW_t0_FRAME;
     elseif size(Sim1.expi,3)==2 % => previous was SB10
-        gnj1 = exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*expj1*gn(:,:,1);
-        gnj2 = exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*expj1*expj2*gn(:,:,1);
-        gni1 = exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*expj1*expj2*expi1*gn(:,:,3);
-        gnst = exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*expj1*expj2*expi1*NEW_t0_FRAME;
+%         gnj1 = exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*expj1*gn(:,:,1);
+%         gnj2 = exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*expj1*expj2*gn(:,:,2);
+%         gni1 = exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*expj1*expj2*expi1*gn(:,:,3);
+%         gnst = exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*expj1*expj2*expi1*NEW_t0_FRAME;
+        gnj1 = expj1*gn(:,:,1);
+        gnj2 = expj1*expj2*gn(:,:,2);
+        gni1 = expj1*expj2*expi1*gn(:,:,3);
+        gnst = expj1*expj2*expi1*NEW_t0_FRAME;
     end
 end
 gsn(:,:,1) = gnj1;
@@ -122,41 +135,46 @@ g = g_li_li1*inv(gn(:,:,5));
 [xi_i1_rel th_i_i1_rel] = homtotwist(g); % the relative transformation twist - READS pseudojoint change
 
 %% Spatial Jacobian
-if SBn==2 % ok for 10
-    Js(:,1) = ad(exp1)*xi_lk;
-    Js(:,2) = ad(exp1)*xj1n;
-    Js(:,3) = ad(exp1*expj1)*xj2n;
-    Js(:,4) = ad(exp1*expj1*expj2)*xi1n;
-elseif SBn==3 % not yet here
-    if size(Sim1.expi,3)==3 % => previous was SB110
-        Js(:,1) = ad(exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*Sim1.expi(:,:,3))*xi_lk;
-        Js(:,2) = ad(exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*Sim1.expi(:,:,3))*xj1n;
-        Js(:,3) = ad(exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*Sim1.expi(:,:,3)*expj1)*xj2n;
-        Js(:,4) = ad(exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*Sim1.expi(:,:,3)*expj1*expj2)*xi1n;
-    elseif size(Sim1.expi,3)==2 % => previous was SB10
-        Js(:,1) = ad(exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2))*xi_lk;
-        Js(:,2) = ad(exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2))*xj1n;
-        Js(:,3) = ad(exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*expj1)*xj2n;
-        Js(:,4) = ad(exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*expj1*expj2)*xi1n;
-    end
-end
-
+% if SBn==2 % ok for 10
+%     Js(:,1) = ad(exp1)*xi_lk;
+%     Js(:,2) = ad(exp1)*xj1n;
+%     Js(:,3) = ad(exp1*expj1)*xj2n;
+%     Js(:,4) = ad(exp1*expj1*expj2)*xi1n;
+% elseif SBn==3 % not yet here
+%     if size(Sim1.expi,3)==3 % => previous was SB110
+%         Js(:,1) = ad(exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*Sim1.expi(:,:,3))*xi_lk;
+%         Js(:,2) = ad(exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*Sim1.expi(:,:,3))*xj1n;
+%         Js(:,3) = ad(exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*Sim1.expi(:,:,3)*expj1)*xj2n;
+%         Js(:,4) = ad(exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*Sim1.expi(:,:,3)*expj1*expj2)*xi1n;
+%     elseif size(Sim1.expi,3)==2 % => previous was SB10
+%         Js(:,1) = ad(exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2))*xi_lk;
+%         Js(:,2) = ad(exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2))*xj1n;
+%         Js(:,3) = ad(exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*expj1)*xj2n;
+%         Js(:,4) = ad(exp1*Sim1.expi(:,:,1)*Sim1.expi(:,:,2)*expj1*expj2)*xi1n;
+%     end
+% end
+    Js(:,1) = ad(eye(4))*xi_lk;
+    Js(:,2) = ad(eye(4))*xj1n;
+    Js(:,3) = ad(expj1)*xj2n;
+    Js(:,4) = ad(expj1*expj2)*xi1n;
 figure(p2fig); % for visual evaluation
 xk_graph = drawtwist(Js(:,1)); hold on;
 xj1_graph = drawtwist(Js(:,2)); hold on;
 xj2_graph = drawtwist(Js(:,3)); hold on;
-xi1_graph = drawtwist(Js(:,3)); hold on;
+xi1_graph = drawtwist(Js(:,4)); hold on;
 
 % % Js
 % % g_li_li1
 %% Build OUTPUT struct
-f1 = 'g0'; v1 = gni1;
+% f1 = 'g0'; v1 = gni1;
+f1 = 'g0'; v1 = gn(:,:,3); % It must return the g_s_i1(0)
 f2 = 'Cg'; v2 = NEW_t0_FRAME; %
 f3 = 'expi'; v3 = exp_for_struct;
 f4 = 'xi'; v4 = Xi_for_struct;
 f5 = 'Sframe'; v5 = NEW_t0_FRAME; %This is the new s(i)->t(i-1) frame only for synthetic config
 f6 = 'Js'; v6 = Js;
 f7 = 'fkm'; v7 = gsn;
-f8 = 'Rk'; v8 = g_slk;
+% f8 = 'Rk'; v8 = g_slk; % doesn't consider tp change
+f8 = 'Rk'; v8 = gnst;
 Si = struct(f1,v1,f2,v2,f3,v3,f4,v4,f5,v5,f6,v6,f7,v7,f8,v8);
 end

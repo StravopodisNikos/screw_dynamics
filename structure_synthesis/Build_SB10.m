@@ -128,13 +128,15 @@ xi1_graph = drawtwist(Js(:,3)); hold on;
 % % Js
 % % g_li_li1
 %% Build OUTPUT struct
-f1 = 'g0'; v1 = gni;
+% f1 = 'g0'; v1 = gni1;
+f1 = 'g0'; v1 = gn(:,:,2); % It must return the g_s_i1(0)
 f2 = 'Cg'; v2 = NEW_t0_FRAME; %
 f3 = 'expi'; v3 = exp_for_struct;
 f4 = 'xi'; v4 = Xi_for_struct;
 f5 = 'Sframe'; v5 = NEW_t0_FRAME;
 f6 = 'Js'; v6 = Js;
 f7 = 'fkm'; v7 = gsn;
-f8 = 'Rk'; v8 = g_slk;
+% f8 = 'Rk'; v8 = g_slk; % doesn't consider tp change
+f8 = 'Rk'; v8 = gnst;
 Si = struct(f1,v1,f2,v2,f3,v3,f4,v4,f5,v5,f6,v6,f7,v7,f8,v8);
 end

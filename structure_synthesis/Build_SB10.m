@@ -1,4 +1,4 @@
-function [Si] = Build_SB10(Sim1,Si0,R,P,SBn,p2fig,ti,Xi1)
+function [Si] = Build_SB10(Sim1,Si0,R,P,SBn,p2fig,ti,Xi1,g_s_lk_1_0)
 % Solves FKP for Structural Block C01, given the previous twists and tfs
 % Works ONLY for 3 DoF with the predefined ruleset
 % INPUT: 1.Sim1 is the struct that contains the previous STRUCTURAL BLOCK INFO
@@ -9,16 +9,28 @@ function [Si] = Build_SB10(Sim1,Si0,R,P,SBn,p2fig,ti,Xi1)
 %        of the current STRUCTURAL BLOCK
 
 %% Synthetic Joint is parameterized to exponential
+% Rotation matrix due to synthetic joint
 Rx01 = R(1); Ry01 = R(2); Rz01 = R(3);
 Px01 = P(1); Py01 = P(2); Pz01 = P(3);
-
 R_lk = rotz(Rz01)*roty(Ry01)*rotx(Rx01);
 [wmegaR thetaR] = rotparam(R_lk); % this is SO(3) element-skew matrix and angle
 exp_wmegaR = skewexp(wmegaR,thetaR); % ==R_fP1a ALWAYS the same
 %  find twist of synthetic joint_it is "equivalent to the reference" since
 %  twist must be built for reference structure
-xi_lk = createtwist(wmegaR,[Sim1.Cg(1,4)+Px01 Sim1.Cg(2,4)+Py01 Sim1.Cg(3,4)+Pz01]'); %ξk
-g_slk = [exp_wmegaR [Sim1.Cg(1,4)+Px01 Sim1.Cg(2,4)+Py01 Sim1.Cg(3,4)+Pz01]'; 0 0 0 1  ];
+if SBn==2
+    g_s_lk_1_0 = Sim1.Cg;
+    xi_lk = createtwist(wmegaR,[g_s_lk_1_0(1,4)+Px01 g_s_lk_1_0(2,4)+Py01 g_s_lk_1_0(3,4)+Pz01]'); %ξk
+    g_slk = [exp_wmegaR [g_s_lk_1_0(1,4)+Px01 g_s_lk_1_0(2,4)+Py01 g_s_lk_1_0(3,4)+Pz01]'; 0 0 0 1  ];
+    exp_lk = twistexp(xi_lk,thetaR);
+%     g_slk = exp_lk*g_s_lk_1_0;
+elseif SBn ==3
+    g_s_lk2_0 = g_s_lk_1_0*Si0.Cg;
+    g_slk = [exp_wmegaR [g_s_lk2_0(1,4)+Px01 g_s_lk2_0(2,4)+Py01 g_s_lk2_0(3,4)+Pz01]'; 0 0 0 1  ];
+    % OR
+%     xi_lk = createtwist(wmegaR,[g_s_lk2_0(1,4)+Px01 g_s_lk2_0(2,4)+Py01 g_s_lk2_0(3,4)+Pz01]'); %ξk
+%     exp_lk = twistexp(xi_lk,thetaR);
+%     g_slk = Sim1.Rk*exp_lk*g_s_lk2_0;
+end
 
 % % exp_lk = twistexp(xi_lk,thetaR);
 % % g_slk = exp_lk*Sim1.Cg; % this is the new g-s-lk after synthetic tf changes aka % this is SE(3) element that represents 
@@ -44,7 +56,11 @@ gn(:,:,3) = inv(Sim1.g0)*gn(:,:,1); % g_li_lj0
 gn(:,:,4) = inv(gn(:,:,1))*gn(:,:,2); % g_lj_li10
 gn(:,:,5) = inv(Sim1.g0)*gn(:,:,2); % g_li_li10
 
-NEW_t0_FRAME = g_slk*Si0.Cg; % new {s} frame for next body only for synthetic change aka gs(0)
+if SBn==2
+    NEW_t0_FRAME = g_slk*Si0.Cg; % gslk * glk_TOOL (0) ONLY for synthetic=> builds new structure in reference anatomy
+elseif SBn ==3
+%     NEW_t0_FRAME = 
+end
 
 % Now, extract new relative twists
 xi_j_new = inv(ad(Sim1.g0))*xjn;
@@ -79,6 +95,7 @@ elseif SBn==3
 end
 gsn(:,:,1) = gnj;
 gsn(:,:,2) = gni;
+gsn(:,:,3) = gnst;
 %% Relative POE FKM
 g_li_li1 = twistexp(xi_j_new,ti(2))*gn(:,:,3)*twistexp(xj_i1_new,ti(3))*gn(:,:,4); % for synthetic+metamorphic
 %% Relative twists
@@ -117,5 +134,7 @@ f3 = 'expi'; v3 = exp_for_struct;
 f4 = 'xi'; v4 = Xi_for_struct;
 f5 = 'Sframe'; v5 = NEW_t0_FRAME;
 f6 = 'Js'; v6 = Js;
-Si = struct(f1,v1,f2,v2,f3,v3,f4,v4,f5,v5,f6,v6);
+f7 = 'fkm'; v7 = gsn;
+f8 = 'Rk'; v8 = g_slk;
+Si = struct(f1,v1,f2,v2,f3,v3,f4,v4,f5,v5,f6,v6,f7,v7,f8,v8);
 end

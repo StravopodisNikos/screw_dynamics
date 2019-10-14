@@ -27,8 +27,10 @@ if SBn==2
   elseif SBn ==3
         g_slk_loc = [exp_wmegaR [Px01 Py01 Pz01]'; 0 0 0 1  ]; 
         g_slk = Sim1.Rk*g_slk_loc;
-        [xi_lk theta_xi_lk] = homtotwist(g_slk);
+%         [xi_lk theta_xi_lk] = homtotwist(g_slk);
         exp_wmegaR = g_slk(1:3,1:3);
+        [wmega_lk theta_lk] = rotparam(exp_wmegaR);
+        xi_lk = createtwist(wmega_lk,[g_slk(1,4) g_slk(2,4) g_slk(3,4)]'); %ξk
 end
 
 wj1n = exp_wmegaR*Si0.wi(:,1); g_sP1b = g_slk*Si0.g0(:,:,7);

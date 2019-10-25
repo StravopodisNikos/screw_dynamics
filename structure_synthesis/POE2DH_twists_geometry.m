@@ -74,8 +74,14 @@ C3 = inv(T3TOOL)*gai(:,:,3);
 %% Calculate DH tfs
 M01 = eye(4)*grel(:,:,1)*inv(C1); %ok
 M12 = C1*grel(:,:,2)*inv(C2); %ok
-M23 = C2*grel(:,:,3)*inv(C3);
+M23 = C2*grel(:,:,3)*inv(C3); %ok
+% DH = gai(:,:,3) - M01*M12*M23*C3; % for evaluation
 
-DH = gai(:,:,3) - M01*M12*M23*C3;
+[L01,a01,d01,th_star01] = CalculateModifiedDHparams(M01);
+[L12,a12,d12,th_star12] = CalculateModifiedDHparams(M12);
+[L23,a23,d23,th_star23] = CalculateModifiedDHparams(M23);
 
+DH(1,:) = [L01,a01,d01,th_star01];
+DH(2,:) = [L12,a12,d12,th_star12];
+DH(3,:) = [L23,a23,d23,th_star23];
 end

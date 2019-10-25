@@ -22,8 +22,9 @@ addpath('/home/nikos/matlab_ws/geom3d/geom3d')
 addpath('/home/nikos/matlab_ws/geom2d/geom2d')
 addpath('/home/nikos/matlab_ws/geom2d/utils')
 %% Reference anatomy
-% robot urdf is built from: /home/nikos/matlab_ws/modular_dynamixel/kinematic_verification_01.xacro
-[robot1] = importrobot('/home/nikos/matlab_ws/modular_dynamixel/structure_synthesis/S011010_1.urdf');  
+% robot urdf is built from: /home/nikos/matlab_ws/modular_dynamixel/structure_synthesis/S011010.xacro
+% [robot1] = importrobot('/home/nikos/matlab_ws/modular_dynamixel/structure_synthesis/structure_max_Wk1.urdf');  
+[robot1] = importrobot('/home/nikos/matlab_ws/modular_dynamixel/structure_synthesis/S011010_POE_DH_conv.urdf');
 robot1.DataFormat = 'column';
 robot1.Gravity = [0 0 -9.80665];
 config = homeConfiguration(robot1);
@@ -84,7 +85,6 @@ TOOL_2 = char(robot1.BodyNames(17)); Ts17 = getTransform(robot1,config,TOOL_2); 
 %%
 %% for S011010
 g_s_frame = getTransform(robot1,config,frame);
-g_s_PseudoConnector1a = getTransform(robot1,config,PseudoConnector1a);
 g_s_frame1 = getTransform(robot1,config,frame1); %must = S2.gsn(:,:,2)
 g_s_frame1_2 = getTransform(robot1,config,frame1_2); %must = S3.gsn(:,:,3)
 g_s_TOOL = getTransform(robot1,config,TOOL); % must = NEW_t0_FRAME in SB10
@@ -92,8 +92,13 @@ g_s_PseudoConnector1a = getTransform(robot1,config,PseudoConnector1a);%must = S2
 g_s_PseudoConnector1b = getTransform(robot1,config,PseudoConnector1b);%must = S2.Cg
 
 % g_s_PseudoConnector1b_2 = getTransform(robot1,config,PseudoConnector1b_2);%must = S2.Cg
-% g_s_TOOL_2 = getTransform(robot1,config,TOOL_2); % must = NEW_t0_FRAME in SB110
-% 
+g_s_TOOL_2 = getTransform(robot1,config,TOOL_2); % must = S3.Rk
+
+g_rel2 = getTransform(robot1,config,frame1,frame); 
+g_rel3 = getTransform(robot1,config,frame1_2,frame1); 
+
+gl2lj3 = getTransform(robot1,config,PseudoConnector1b_2,frame1); % must gn3
+glj3l3 = getTransform(robot1,config,frame1_2,PseudoConnector1b_2); % must gn4
 % gcorrect = getTransform(robot1,config,PseudoConnector1a_2,TOOL);
 % 
 % gslk1 = g_s_PseudoConnector1a;
@@ -101,9 +106,11 @@ g_s_PseudoConnector1b = getTransform(robot1,config,PseudoConnector1b);%must = S2
 % gslk2 = g_s_PseudoConnector1a_2;
 
 %% call AUTO GA assembly
-[g,Js] = structure_assembly_GA(reference_figure);
-%%
-
-%% Check for errors
-ga2_error = g(:,:,1)-g_s_frame1; % 1.0e-15
-ga3_error = g(:,:,2)-g_s_frame1_2; % 1.0e-5
+[g,grel,Js] = structure_assembly_GA(reference_figure);
+ga2_error = g(:,:,2)-g_s_frame1; % 1.0e-15
+ga3_error = g(:,:,3)-g_s_frame1_2; % 1.0e-5
+gtool_error = g(:,:,4)-g_s_TOOL_2;
+grel2_error = grel(:,:,2) - g_rel2;
+grel3_error = grel(:,:,3) - g_rel3;
+%% Extract Modified DH params from POE
+[DH] = POE2DH_twists_geometry(g,grel,Js);

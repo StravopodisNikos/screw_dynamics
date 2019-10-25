@@ -46,20 +46,20 @@ Xi_for_struct(:,3) = xi1n;
 gn(:,:,1) = g_slk*Si0.g0(:,:,7); %gn_s_lj10
 gn(:,:,2) = g_slk*Si0.g0(:,:,7)*Si0.g0(:,:,8); %gn_s_lj20
 gn(:,:,3) = g_slk*Si0.g0(:,:,7)*Si0.g0(:,:,8)*Si0.g0(:,:,9); %gn_s_li10
-gn(:,:,4) = inv(Sim1.g0)*gn(:,:,1); % gn_li_lj10
+gn(:,:,4) = inv(Sim1.gsli1)*gn(:,:,1); % gn_li_lj10
 gn(:,:,5) = inv(gn(:,:,1))*gn(:,:,2); % gn_lj1_lj20
 gn(:,:,6) = inv(gn(:,:,2))*gn(:,:,3); % gn_lj2_li10
-gn(:,:,7) = inv(Sim1.g0)*gn(:,:,3); % gn_li_li10
-gn(:,:,8) = inv(Sim1.g0)*gn(:,:,2); % gn_li_lj20
+gn(:,:,7) = inv(Sim1.gsli1)*gn(:,:,3); % gn_li_li10
+gn(:,:,8) = inv(Sim1.gsli1)*gn(:,:,2); % gn_li_lj20
 gn(:,:,9) = inv(gn(:,:,1))*gn(:,:,3); % gn_lj1_li10
 
 NEW_t0_FRAME = g_slk*Si0.Cg;
 
-xi_j1_new = inv(ad(Sim1.g0))*xj1n; 
-xi_j2_new = inv(ad(Sim1.g0))*xj2n; 
+xi_j1_new = inv(ad(Sim1.gsli1))*xj1n; 
+xi_j2_new = inv(ad(Sim1.gsli1))*xj2n; 
 xj1_j2_new = inv(ad(gn(:,:,1)))*xj2n; 
 xj2_i1_new = inv(ad(gn(:,:,2)))*xi1n; 
-xi_i1_new = inv(ad(Sim1.g0))*xi1n; 
+xi_i1_new = inv(ad(Sim1.gsli1))*xi1n; 
 
 exp1 = twistexp(Xi1,ti(1));
 expj1 = twistexp(xj1n, ti(2));
@@ -120,8 +120,9 @@ f4 = 'xi'; v4 = Xi_for_struct;
 f5 = 'Sframe'; v5 = NEW_t0_FRAME; %This is the new s(i)->t(i-1) frame only for synthetic config
 f6 = 'Js'; v6 = Js;
 f7 = 'fkm'; v7 = gsn;
-% f8 = 'Rk'; v8 = g_slk; % doesn't consider tp change
 f8 = 'Rk'; v8 = gnst;
-Si = struct(f1,v1,f2,v2,f3,v3,f4,v4,f5,v5,f6,v6,f7,v7,f8,v8);
+f9 = 'g_rel'; v9 = g_li_li1;
+f10 = 'gsli1'; v10 = gsn(:,:,3);
+Si = struct(f1,v1,f2,v2,f3,v3,f4,v4,f5,v5,f6,v6,f7,v7,f8,v8,f9,v9,f10,v10);
 end
 

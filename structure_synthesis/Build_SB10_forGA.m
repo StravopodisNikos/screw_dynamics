@@ -25,7 +25,8 @@ if SBn==2
         exp_lk = twistexp(xi_lk,thetaR);
 
   elseif SBn ==3
-        g_slk_loc = [exp_wmegaR [Px01 Py01 Pz01]'; 0 0 0 1  ]; 
+        g_slk_loc = [exp_wmegaR [Px01 Py01 Pz01]'; 0 0 0 1  ];
+%         poutana = eye(4); poutana(1,4) = -0.091;
         g_slk = Sim1.Rk*g_slk_loc;
 %         [xi_lk theta_xi_lk] = homtotwist(g_slk);
         exp_wmegaR = g_slk(1:3,1:3);
@@ -43,14 +44,19 @@ Xi_for_struct(:,2) = xi1n;
 
 gn(:,:,1) = g_slk*Si0.g0(:,:,8); % g_s_lj0n = g_s_lk*g_lk_lj0
 gn(:,:,2) = g_slk*Si0.g0(:,:,8)*Si0.g0(:,:,5); % g_s_li10n
-gn(:,:,3) = inv(Sim1.g0)*gn(:,:,1); % g_li_lj0
+% gn(:,:,3) = inv(Sim1.g0)*gn(:,:,1); % g_li_lj0 
+gn(:,:,3) = inv(Sim1.gsli1)*gn(:,:,1); % g_li_lj0
+% gn(1,4,3) = 0.091; 
 gn(:,:,4) = inv(gn(:,:,1))*gn(:,:,2); % g_lj_li10
-gn(:,:,5) = inv(Sim1.g0)*gn(:,:,2); % g_li_li10
+% gn(:,:,5) = inv(Sim1.g0)*gn(:,:,2); % g_li_li10
+gn(:,:,5) = inv(Sim1.gsli1)*gn(:,:,2); % g_li_li10
 
 NEW_t0_FRAME = g_slk*Si0.Cg;
 
-xi_j_new = inv(ad(Sim1.g0))*xjn;
-xi_i1_new = inv(ad(Sim1.g0))*xi1n;
+% xi_j_new = inv(ad(Sim1.g0))*xjn;
+xi_j_new = inv(ad(Sim1.gsli1))*xjn;
+% xi_i1_new = inv(ad(Sim1.g0))*xi1n;
+xi_i1_new = inv(ad(Sim1.gsli1))*xi1n;
 xj_i1_new = inv(ad(gn(:,:,1)))*xi1n;
 
 exp1 = twistexp(Xi1,ti(1));
@@ -91,7 +97,7 @@ elseif SBn==3
 end
 
 figure(p2fig); % for visual evaluation
-% xk_graph = drawtwist(Js(:,1)); hold on;
+xk_graph = drawtwist(Js(:,1)); hold on;
 xj_graph = drawtwist(Js(:,2)); hold on;
 xi1_graph = drawtwist(Js(:,3)); hold on;
 
@@ -104,6 +110,7 @@ f4 = 'xi'; v4 = Xi_for_struct;
 f5 = 'Sframe'; v5 = NEW_t0_FRAME; %This is the new s(i)->t(i-1) frame only for synthetic config
 f6 = 'Js'; v6 = Js;
 f7 = 'fkm'; v7 = gsn;
-% f8 = 'Rk'; v8 = g_slk; % doesn't consider tp change
 f8 = 'Rk'; v8 = gnst;
-Si = struct(f1,v1,f2,v2,f3,v3,f4,v4,f5,v5,f6,v6,f7,v7,f8,v8);
+f9 = 'g_rel'; v9 = g_li_li1;
+f10 = 'gsli1'; v10 = gsn(:,:,2);
+Si = struct(f1,v1,f2,v2,f3,v3,f4,v4,f5,v5,f6,v6,f7,v7,f8,v8,f9,v9,f10,v10);

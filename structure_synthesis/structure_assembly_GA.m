@@ -1,4 +1,4 @@
-function [g,Js] = structure_assembly_GA(point2figure)
+function [g,grel,Js] = structure_assembly_GA(point2figure)
 
 %% load libraries
 % load Murray kinematics
@@ -46,8 +46,8 @@ xi_110 = xi;
 structure(1,:) = 'xxSB0';
 % structure(2,:) = 'xSB10';
 structure(2,:) = 'SB110';
-% structure(3,:) = 'SB110'; % Normally this is extracted by ga 
-structure(3,:) = 'xSB10';
+structure(3,:) = 'xSB10'; % Normally this is extracted by ga 
+% structure(3,:) = 'xSB10';
 %% END OF MANUAL INTERFERENCE %%
 % First is always a lonely active joint at z axis rotation
 t0 = 0; % first active angle
@@ -62,7 +62,7 @@ g_s_li1_0 = [   1.0000      0         0         0;...
                  0          0         0         1.0000];
 % zero tf to the first connection Point of Synthetic Joint
 % (zero tf between {s} -> frame
-g_s_lk1_0 = [1.0000    0         0          0.0910;...
+g_s_lk1_0 = [1.0000    0         0          0;...
              0         1.0000    0          0;...
              0         0         1.0000     0.0570;...
              0         0         0          1.0000];
@@ -74,7 +74,8 @@ f4 = 'Cg'; v4 = g_s_lk1_0; % only for this, because the first!
 f5 = 'expi'; v5 = exp1;
 f6 = 'xi'; v6 = x1;
 f7 = 'Sframe'; v7 = zeros(4);
-s1 = struct(f1,v1,f2,v2,f3,v3,f4,v4,f5,v5,f6,v6,f7,v7);
+f8 = 'gsli1'; v8 = g_s_li1_0;
+s1 = struct(f1,v1,f2,v2,f3,v3,f4,v4,f5,v5,f6,v6,f7,v7,f8,v8);
 % For second string part a check if '010' or '0110' takes place
 % f5-f6-f7 are only initialization since 10,110 never start! Values are
 % given ONLY inside functions
@@ -116,10 +117,10 @@ switch structure(2,:)
         [S2] = Build_SB10_forGA(s1,s2,R1,P1,n,point2figure,[t0; t10],x1);
         a2 = 3; % column of second active joint in final Js
     case 'SB110'
-        t110 = [0 1.5708 0]';
+        t110 = [1.5708 0.7854 0]';
         n = 2; % Structural Block number
-        R1 = [1 1 0]; % normally ga gives them
-        P1 = [0 -0.05 0]; % normally ga gives them
+        R1 = [0.7854 1.5708 0]; % normally ga gives them
+        P1 = [0.1 0.05 0]; % normally ga gives them
         [S2] = Build_SB110_forGA(s1,s3,R1,P1,n,point2figure,[t0; t110],x1);
         a2 = 4; % column of second active joint in final Js
     otherwise
@@ -132,10 +133,10 @@ end
 % 2. If acive are s
 switch structure(3,:)
     case 'xSB10'
-        t10 = [1.5708 0]';
+        t10 = [-0.7854 0]';
         n = 3; % Structural Block number
-        R2 = [1 1 0]; % normally ga gives them
-        P2 = [0.05 0 0.05]; % normally ga gives them
+        R2 = [0 0 1.5708]; % normally ga gives them
+        P2 = [0 0 0]; % normally ga gives them
         [S3] = Build_SB10_forGA(S2,s2,R2,P2,n,point2figure,[t0; t10],x1);
         a3 = 3; % column of second active joint in final Js
     case 'SB110'
@@ -148,10 +149,18 @@ switch structure(3,:)
     otherwise
         warning('Unexpected structural block entered!')
 end
-g(:,:,1) = S2.fkm(:,:,a2-1); %ga2
-g(:,:,2) = S3.fkm(:,:,a3-1); %ga3
+
+g(:,:,1)= g_s_li1_0; %ga1
+g(:,:,2) = S2.fkm(:,:,a2-1); %ga2
+g(:,:,3) = S3.fkm(:,:,a3-1); %ga3
+g(:,:,4) = S3.Rk; % gtool
+
 Js(:,1) = x1; %xa1
 Js(:,2) = S2.Js(:,a2); % xa2
 Js(:,3) = S3.Js(:,a3); % xa3
+
+grel(:,:,1)= g_s_li1_0; % 0 - 1
+grel(:,:,2)= S2.g_rel; % 1 - 2
+grel(:,:,3)= S3.g_rel;% 2 - 3
 
 end

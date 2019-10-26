@@ -33,7 +33,7 @@ show(robot1,config,'PreservePlot',false);
 hold on;
 axis auto;
 box on;
-robot_DoF = 1;
+% robot_DoF = 1;
 %% Zero Structure-Anatomy-Configuration tfs
 %% all pi,wi for twists,expos creation must be calculated from this
 %% AND recalculated depending the synthetic variables!!!
@@ -43,17 +43,20 @@ frame = char(robot1.BodyNames(3)); Ts3 = getTransform(robot1,config,frame); draw
 PseudoConnector1a = char(robot1.BodyNames(4)); Ts4 = getTransform(robot1,config,PseudoConnector1a); drawframe(Ts4, scale); hold on;
 PseudoConnector1b = char(robot1.BodyNames(5)); Ts5 = getTransform(robot1,config,PseudoConnector1b); drawframe(Ts5, scale); hold on;
 frame1 = char(robot1.BodyNames(8)); Ts8 = getTransform(robot1,config,frame1); drawframe(Ts8, scale); hold on;
+TOOL = char(robot1.BodyNames(9)); Ts9 = getTransform(robot1,config,TOOL); drawframe(Ts9, scale); hold on;
 
 % g_st = getTransform(robot,config,t(source),s(target)) source: frame from --> target: frame to
 g_s_li0 = getTransform(robot1,config,frame);
 g_s_lj0 = getTransform(robot1,config,PseudoConnector1b);
 g_s_li10 = getTransform(robot1,config,frame1);
-
 g_s_lk0 = getTransform(robot1,config,PseudoConnector1a);
+g_s_TOOL = getTransform(robot1,config,TOOL);
+
 g_li_lk0 = getTransform(robot1,config,PseudoConnector1a,frame);
 g_lk_lj0 = getTransform(robot1,config,PseudoConnector1b,PseudoConnector1a);
 g_lk_li0 = getTransform(robot1,config,PseudoConnector1b,frame);
 g_lk_li10 = getTransform(robot1,config,PseudoConnector1b,frame1);
+g_lk_TOOL = getTransform(robot1,config,TOOL,PseudoConnector1a);
 
 g_li_lj0 = getTransform(robot1,config,PseudoConnector1b,frame);
 g_lj_li10 = getTransform(robot1,config,frame1,PseudoConnector1b);
@@ -64,15 +67,15 @@ g0(:,:,3) = g_s_li10;
 g0(:,:,4) = g_li_lj0;
 g0(:,:,5) = g_lj_li10;
 g0(:,:,6) = g_li_li10;
-
 g0(:,:,7) = g_li_lk0; % with these 2: i->k->j->i1
 g0(:,:,8) = g_lk_lj0;
 g0(:,:,9) = g_s_lk0;
+g0(:,:,10) = g_lk_TOOL;
 %% Extracs initial geometry attributes
 pi(:,1)= Ts3(1:3,4); % p1 on ξi
 pi(:,2)= Ts5(1:3,4); % p2 on ξj
 pi(:,3)= Ts8(1:3,4); % p3 on ξi+1
-pi(:,4)= Ts4(1:3,4); % p1 on ξk
+pi(:,4)= Ts4(1:3,4); % p4 on ξk
 wi(:,1) = [0 0 1]';
 wi(:,2) = [0 1 0]';
 wi(:,3) = [0 1 0]';
@@ -80,6 +83,8 @@ wi(:,3) = [0 1 0]';
 xi(:,1) = createtwist(wi(:,1),pi(:,1)); %ξi
 xi(:,2) = createtwist(wi(:,2),pi(:,2)); %ξj
 xi(:,3) = createtwist(wi(:,3),pi(:,3)); %ξi+1
+% save('SB10_zero_data','pi','wi','g0','xi'); % for kinematic_verification_S0101110.m in this folder
+
 %% Extract relative twists
 % This are the relative twists of manipulator in reference
 % anatomy-configuration, as from eq.3.10
@@ -129,12 +134,18 @@ PseudoConnector1b_2 = char(robot3.BodyNames(5)); Ts5_2 = getTransform(robot3,con
 % wi(:,2)= sym('w1j',[3 1]); % w1j on ξpj
 % wi(:,3)= sym('w0i1',[3 1]); % w0_i+1 on ξa_i+1
 %% Fwd Kinematic Mapping
-% ti = sym('ti',[3 1], 'real');
-% ti(1) = 'ti';
-% ti(2) = 'tp1';
-% ti(3) = 'ti1';
-ti = [0 1.5708 0]'; % from here i control the 3 angles: 1:active1 2:passive1 3:active2
-Rx01 = 1.5708; Ry01=1; Rz01=1; Px01=0.05; Py01=-0.05; Pz01=0.05; % from here i control the 
+% % ti = sym('ti',[3 1], 'real');
+% % ti(1) = 'ti';
+% % ti(2) = 'tp1';
+% % ti(3) = 'ti1';
+ti = [0 -0.7854 0]'; % from here i control the 3 angles: 1:active1 2:passive1 3:active2
+
+% % R01 = sym('R01',[3 1], 'real');
+% % R01(1) = 'Rx01'; R01(2) = 'Ry01'; R01(3) = 'Rz01';
+% % P01 = sym('P01',[3 1], 'real');
+% % P01(1) = 'Px01'; P01(2) = 'Py01'; P01(3) = 'Pz01';
+Rx01 = 0; Ry01=0; Rz01=1.5708; Px01=0; Py01=0.05; Pz01=0.05; % from here i control the 
+
 % 6 Euler variables of the synthetic joint. These variables are ONLY LOCAL
 % in the frame-PseudoConnector1a. i.e. Describe how "Pseudoconector1a"
 % changes with respect to "frame". MUST be same with parameters defined in
@@ -152,17 +163,24 @@ Rx01 = 1.5708; Ry01=1; Rz01=1; Px01=0.05; Py01=-0.05; Pz01=0.05; % from here i c
 
 %% Here i test FKM of frame__PseudoConnector1a. This is the joint that
 % genetic algorithm changes its EULER variables.
-% My goal is to convert this variables to POE
+% My goal is to convert this variables to POE using twists
 % g_fP1a = [R_fP1a p
 %            0^T   1]
+
+% % R_fP1a = rotz(R01(3))*roty(R01(2))*rotx(R01(1));
 R_fP1a = rotz(Rz01)*roty(Ry01)*rotx(Rx01);
+
 [wmegaR thetaR] = rotparam(R_fP1a); % this is SO(3) element-skew matrix and angle
 exp_wmegaR = skewexp(wmegaR,thetaR); % ==R_fP1a ALWAYS the same
 %  find twist of synthetic joint_it is "equivalent to the reference" since
 %  twist must be built for reference structure
+
+% % twist_fP1a = createtwist(wmegaR,[g_s_lk0(1,4)+P01(1) g_s_lk0(2,4)+P01(2) g_s_lk0(3,4)+P01(3)]'); %ξk
 twist_fP1a = createtwist(wmegaR,[g_s_lk0(1,4)+Px01 g_s_lk0(2,4)+Py01 g_s_lk0(3,4)+Pz01]'); %ξk
 % exp_fP1a = twistexp(twist_fP1a,thetaR);
+% g_fP1a = exp_fP1a*g_s_lk0;
 
+% % g_fP1a = [exp_wmegaR [g_s_lk0(1,4)+P01(1) g_s_lk0(2,4)+P01(2) g_s_lk0(3,4)+P01(3)]'; 0 0 0 1];
 g_fP1a = [exp_wmegaR [g_s_lk0(1,4)+Px01 g_s_lk0(2,4)+Py01 g_s_lk0(3,4)+Pz01]'; 0 0 0 1];
 [twist_g_fP1a theta_g_fP1a] = homtotwist(g_fP1a); % this is SE(3) element that represents 
 % the rigid motion of the structure change induced by synthetic_joint:frame_PseudoConnector1a
@@ -201,6 +219,7 @@ gn(:,:,5) = inv(gn(:,:,2))*gn(:,:,3); % g_lj_li10
 gn_lj_li10 = getTransform(robot3,config3,frame1_2,PseudoConnector1b_2);
 gn(:,:,6) = inv(gn(:,:,1))*gn(:,:,3); % g_li_li10
 gn_li_li10 = getTransform(robot3,config3,frame1_2,frame_2);
+gn(:,:,7) = g_fP1a*g_lk_TOOL;
 
 % Now, extract new relative twists
 xs_i_new = inv(ad(eye(4)))*xi(:,1);
@@ -208,18 +227,21 @@ xi_j_new = inv(ad(gn(:,:,1)))*xi2new;
 xi_i1_new = inv(ad(gn(:,:,1)))*xi3new;
 xj_i1_new = inv(ad(gn(:,:,2)))*xi3new;
 
+xi_j_new_dot = iad(gn(:,:,4)) * xi_j_new;
+Cim1 = inv(gn(:,:,4));
+Ci = gn(:,:,5);
 % Here is POE FKM for new structure
 gn1(:,:,1) = expi(:,:,1)*gn(:,:,1); % g_s_li
 gn1(:,:,2) = expi(:,:,1)*expi(:,:,2)*gn(:,:,2); % g_s_lj
 gn1(:,:,3) = expi(:,:,1)*expi(:,:,2)*expi(:,:,3)*gn(:,:,3); % g_s_li1
-
+gn1(:,:,4) = expi(:,:,1)*expi(:,:,2)*expi(:,:,3)*gn(:,:,7); % g_s_TOOL
 %% Jacobians
 % g_li_li1_0 = twistexp(xi_i1_0,0)*g0(:,:,6); % IT WORKS SINCE: g_li_li1_0 = g_li_li10
 
 % Only metamorphic joint
 % % % Spatial Jacobian is instantaneous twists with respect to {s}
 % % % Js(:,1)=sym(xi(:,1)); % for sym only
-% % Js(:,1)=xi(:,1);
+% % Js(:,1)=x       i(:,1);
 % % % Js(:,2)=ad(expi(:,:,1))*xi(:,2);
 % % Js(:,2)=ad(expi(:,:,1)*expi(:,:,2))*xi(:,3);
 % % % Relative Jacobian: NOT STUDIED YET
@@ -229,8 +251,8 @@ gn1(:,:,3) = expi(:,:,1)*expi(:,:,2)*expi(:,:,3)*gn(:,:,3); % g_s_li1
 % Synthetic and metamorphic
 Js(:,1) = xi(:,1);
 Js(:,2) = ad(expi(:,:,1))*twist_fP1a;
-Js(:,3) = ad(expi(:,:,1)*expi(:,:,2))*xi2new;
-Js(:,4) = ad(expi(:,:,1)*expi(:,:,2)*expi(:,:,3))*xi3new;
+Js(:,3) = ad(expi(:,:,1))*xi2new;
+Js(:,4) = ad(expi(:,:,1)*expi(:,:,2))*xi3new;
 figure(test2_figure); % for visual evaluation
 xi_graph = drawtwist(Js(:,1)); hold on;
 xk_graph = drawtwist(Js(:,2)); hold on;
@@ -256,19 +278,20 @@ g_li_li1a = twistexp(xi_j_new,ti(2))*gn(:,:,4)*twistexp(xj_i1_new,ti(3))*gn(:,:,
 
 % synthetic test
 g_li_li1_1 = getTransform(robot3,config3,frame1_2,frame_2);
-error_g_li_li1_1 = g_li_li1a - g_li_li1_1
+error_g_li_li1_1 = g_li_li1a - g_li_li1_1;
 g_s_li_1 = getTransform(robot3,config3,frame_2);
 g_s_li1_1 = getTransform(robot3,config3,frame1_2);
 g_s_lj_1 = getTransform(robot3,config3,PseudoConnector1b_2);
-error_g_s_li = gn1(:,:,1)-g_s_li_1
-error_g_s_lj = gn1(:,:,2)-g_s_lj_1
-error_g_s_li1 = gn1(:,:,3)-g_s_li1_1
+error_g_s_li = gn1(:,:,1)-g_s_li_1;
+error_g_s_lj = gn1(:,:,2)-g_s_lj_1;
+error_g_s_li1 = gn1(:,:,3)-g_s_li1_1;
 
 %% Graphical examination of twists
-% g-> ξ for i->i1
+% g-> ξ for i->i1 as described in p.45 Murray
 [xi_i1_abs th_i_i1_abs] = homtotwist(g_li_li1a); % the absolute transformation twist- READS structure change
 g = g_li_li1a*inv(gn(:,:,6));
 [xi_i1_rel th_i_i1_rel] = homtotwist(g); % the relative transformation twist - READS pseudojoint change
+
 % g-> ξ for s->i
 [xs_i_abs th_s_i_abs] = homtotwist(gn1(:,:,1));
 g0 = gn1(:,:,1)*inv(gn(:,:,1));
@@ -278,7 +301,7 @@ figure(test2_figure);
 xi_i1_abs_graph = drawtwist(xi_i1_abs); hold on;
 xi_i1_rel_graph = drawtwist(xi_i1_rel); hold on;
 %% up to this for Lefteris GA %%
-
+% [Js; g_li_li1a]
 %% Convert from POE to DH - UNDER DEVELOPMENT
 
 %% Graphical DH solution
@@ -286,7 +309,12 @@ xi_i1_rel_graph = drawtwist(xi_i1_rel); hold on;
 DH_figure = figure;
 figure(DH_figure);
 drawframe(gn1(:,:,1), scale_active); hold on; % gsli
+text(gn1(1,4,1), gn1(2,4,1), gn1(3,4,1),'\leftarrow g_{sli}'), hold on;
 drawframe(gn1(:,:,3), scale_active); hold on; % gsli1
+text(gn1(1,4,3), gn1(2,4,3), gn1(3,4,3),'\leftarrow g_{sli1}'), hold on;
+drawframe(gn1(:,:,4), scale_active); hold on; % gsli1
+text(gn1(1,4,4), gn1(2,4,4), gn1(3,4,4),'\leftarrow g_{sTOOL}'), hold on;
+
 xi_graph = drawtwist(Js(:,1)); hold on;
 xi1_graph = drawtwist(Js(:,4)); hold on;
 p1_1 = [xi_graph.XData(1) xi_graph.YData(1) xi_graph.ZData(1) ]';
@@ -299,6 +327,35 @@ text(p2_2(1), p2_2(2), p2_2(3),'\leftarrow ξ_{i+1}'), hold on;
 % im1Tx(Lim1) if im1->i or iTx(Li) if i->i1
 [Li, d, Si, Si1] = DistBetween2Segment(p1_1, p1_2, p2_1, p2_2); %[shortestdistance,directionvector,closepointonA,closepointonB] % L2
 plot3([Si(1) Si1(1)],[Si(2) Si1(2)],[Si(3) Si1(3)]), hold on
+
+%% added for POE->DH working on xi_i working only for tpj=1.5708
+zero_x_i = -d/norm(d);
+zero_z_i = wi(:,1);
+zero_y_i = cross(zero_z_i,zero_x_i); % k^ x i^ = j^
+zero_T_i = [zero_x_i zero_y_i zero_z_i Si; 0 0 0 1];
+figure(DH_figure);
+drawframe(zero_T_i, 0.05, true); hold on; % DHi
+Ci = inv(zero_T_i)*gn1(:,:,1); 
+%% working on xi_i1'
+% set arbitrary point on xi_i1
+nSi1 = Si1; % y=0.5 is arbitrary
+zero_x_i1 = gn1(1:3,3,4); % arbitrary
+zero_z_i1 = Js(4:6,4);
+zero_y_i1 = cross(zero_z_i1,zero_x_i1); % k^ x i^ = j^
+zero_T_i1 = [zero_x_i1 zero_y_i1 zero_z_i1 nSi1; 0 0 0 1];
+figure(DH_figure);
+drawframe(zero_T_i1, 0.05, true); hold on; % DHi1
+Ci1 = inv(zero_T_i1)*gn1(:,:,3); 
+% It must be: iMi1 = Ci*g_li_li1a*Ci1
+% iMi1 = ModifiedDHmatrix(ti(2),-1.5708,Li,0); % first way as i knew the DH params
+ver_iMi1 = Ci*g_li_li1a*inv(Ci1); % extracts DH matrix from POE and known geometry
+% gn1(:,:,3)-zero_T_i*ver_iMi1*Ci1 -> error e-15 ok
+
+xi_rel1 = ad(ver_iMi1)*Js(:,4);
+xi_rel2 = ad(ver_iMi1)*xi_i1_0;
+xi_rel3 = ad(ver_iMi1)*xi(:,3);
+xi_rel4 = ad(ver_iMi1)*xi3new;
+xi_rel5 = ad(ver_iMi1)*[0 0 0 0 1 0]';
 
 % im1Rx(aim1) if im1->i or iRx(ai) if i->i1
 % Draw plane vertical to common normal line between axes
@@ -322,14 +379,30 @@ di1 = distancePoints3d( [gn1(1,4,3) gn1(2,4,3) gn1(3,4,3)] , Si1' ); % d2
 %       |  L2   |  a2   |  d2   |  th2+0 
 [zeroM1] = ModifiedDHmatrix(0,0,0,di1_0);
 [oneMi] = ModifiedDHmatrix(0,ai,Li,di1);
-DHtf = zeroM1*oneMi; % must be equal with gn1(:,:,3)
+DHtf=zeroM1*oneMi; % must be equal with Pos of gn1(1:3,4,3) and Rot of rotx(ai)*gn1(1:3,1:3,3) : DHtf = rotx(1.5708)*g_s_li1(1:3,1:3,3)
 
+Test = Cim1*g_li_li1a*inv(Ci);
+M = twistexp(xi_j_new_dot,ti(2))*twistexp(xj_i1_new,ti(3));
+DHim1 = gn1(:,:,1)*gn(:,:,4); % g_s_li*g_li_lj0
+DHi = gn1(:,:,1)*g_li_li1a*inv(gn(:,:,5));% g_s_li*g_li_li1*g_li1_lj0
+
+Cim1D = inv(zeroM1)*gn1(:,:,1);
+CiD = inv(DHtf)*gn1(:,:,3);
+g_li_li1b = twistexp(xi_j_new_dot,ti(2))*twistexp(xj_i1_new,ti(3))*gn(:,:,6);
 %% Analytical DH calculation from POE
-[DH_i_i1_2] =  POE2DH_LiaoWu(xi_i1_abs,Js(:,3));
-[DH_i_i1_3] = POE2DH_LiaoWu(xi_i1_abs,Js(:,4));
+xim1_dot = [0 0 0 0 0 1]';
+xi_dot = [0 0 0 0 1 0]';
 
-[DH_i_i1_5] = POE2DH_LiaoWu(xi_i1_rel,Js(:,3));
-[DH_i_i1_6] = POE2DH_LiaoWu(xi_i1_rel,Js(:,4));
+xi1_rel = ad(twistexp(xi_j_new_dot,ti(2))*twistexp(xj_i1_new,ti(3)))*xi(:,3);
+
+% [DH_i_i1_2] =  POE2DH_LiaoWu(xi_i1_rel,xi_dot);
+[DH_i_i1_2] =  POE2DH_LiaoWu(xi_i1_rel,Js(:,4));
+% % [DH_i_i1_2] =  POE2DH_LiaoWu(xi1_rel,Js(:,4));
+% [DH_i_i1_5] =  POE2DH_LiaoWu(xi_i1_abs,xi_dot);
+% [DH_i_i1_6] = POE2DH_LiaoWu(xi_i1_abs,Js(:,4));
+
+% [DH_i_i1_5] = POE2DH_LiaoWu(xi_i1_rel,Js(:,3));
+% [DH_i_i1_6] = POE2DH_LiaoWu(xi_i1_rel,Js(:,4));
 
 % [DH_i_i1_6] = POE2DH_LiaoWu(Js(:,1),Js(:,4)); % this one gives solution
 
@@ -386,6 +459,6 @@ sol_sys6 = struct(field1,value1,field2,value2,field3,value3,field4,value4);
 % % sol_sys8 = struct(field1,value1,field2,value2,field3,value3,field4,value4);
 
 %% save data
-a = fopen('sol_sys5_Lim1.txt','w');
-fprintf(a,'%s\n',char(sol_sys5.Lim(1)));
-fclose(a);
+% a = fopen('sol_sys5_Lim1.txt','w');
+% fprintf(a,'%s\n',char(sol_sys5.Lim(1)));
+% fclose(a);

@@ -1,4 +1,4 @@
-function [DH] = POE2DH_twists_geometry(gai,grel,Js)
+function [DH,M01,M12,M23,DH_figure] = POE2DH_twists_geometry(gai,grel,Js,xin)
 % works for 3 DOF metamorphic manipulators given from
 % structure_assembly_GA.m
 % OUTPUT: DH 3x4 matrix
@@ -84,4 +84,18 @@ M23 = C2*grel(:,:,3)*inv(C3); %ok
 DH(1,:) = [L01,a01,d01,th_star01];
 DH(2,:) = [L12,a12,d12,th_star12];
 DH(3,:) = [L23,a23,d23,th_star23];
+
+%% Validates  Liao Wu => Not validated!!!
+xi1 = ad(M01)*xin(:,1); % must be  Js(:,1)
+xi2 = ad(M12)*xin(:,2); % must be  Js(:,1)
+xi3 = ad(M23)*xin(:,3); % must be  Js(:,1)
+
+xiDH(:,1) = iad(M01)*Js(:,1);
+xiDH(:,2) = iad(M12)*Js(:,2);
+xiDH(:,3) = iad(M23)*Js(:,3);
+% figure(DH_figure);
+% xiDH1_graph = drawtwist(xiDH(:,1)); hold on;
+% xiDH2_graph = drawtwist(xiDH(:,2)); hold on;
+% xiDH3_graph = drawtwist(xiDH(:,3)); hold on;
+
 end

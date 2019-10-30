@@ -1,4 +1,4 @@
-function [DCI,E,P,D] = CalculateDynamicConditioningIndex2_3DoF(M,nDoF)
+function [DCI,E,P,D] = CalculateDynamicConditioningIndex2_3DoF(M,nDoF,w23)
 % Calculates Dynamic conditioning Index for serial manipulator
 % A measure that quantifies how far is a given confguration from dynamic isotropy
 %% Here definition 2 is approached!
@@ -24,8 +24,10 @@ e = vertcat(e1,e2,e3); % extrac n*(n+1)/2 vector
 %% Define Weighting matrix depending on the user-desired relations between decoupling and isotropy
 %% and the dimensional inhomogeneities of inertia matrix
 w1 = [0 0 0 ]'; % Interested only for for dynamic decoupling
-w2 = [0.1 0.1]';
-w3 = 0.1;
+w2 = w23(1:2)';
+w3 = w23(3);
+% w2 = [0.1 0.1]';
+% w3 = 0.1;
 
 scale_weights = 100; 
 w = scale_weights*vertcat(w1,w2,w3);

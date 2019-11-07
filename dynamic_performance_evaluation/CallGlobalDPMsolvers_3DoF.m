@@ -1,4 +1,4 @@
-function [x,fval,exitflag,output] = CallGlobalDPMsolvers_3DoF(xi_ai, xi_pi, gst0, gsli0, M0b_CoM)
+function [x,fval,exitflag,output] = CallGlobalDPMsolvers_3DoF(xi_ai, xi_pi, gst0, gsli0, M0b_CoM, M0s_CoM)
 
 
 %% Uncomment desired call for solver
@@ -19,12 +19,12 @@ LB1 = [-1.57 -1.57 -1.57 -3.3 -3.3 -3.3 1 1 1 1 ];
 UB1 = [1.57 1.57 1.57 3.3 3.3 3.3 5 5 5 5];
 %% 2 for DCI
 % FitnessFunction2a = @(x)MinDCI_3DoF(x, xi_ai, xi_pi, gst0, gsli0, M0b_CoM);
-FitnessFunction2b = @(x)GlobalMinDCI1_3DoF(x, xi_ai, xi_pi, gst0, gsli0, M0b_CoM);
-nvars2 = 7; % q1,2,3 tpi
+FitnessFunction2b = @(x)GlobalMinMaxDCI_3DoF(x, xi_ai, xi_pi, gst0, gsli0, M0b_CoM);
+nvars2 = 6; % q2,3 tpi
 % LB2a = [-1.57 -1.57 -1.57 1 1 1 1];
 % UB2a = [1.57 1.57 1.57 5 5 5 5];
-LB2b = [0.2 0.2 0.2 1 1 1 1];
-UB2b = [0.3 0.3 0.3 5 5 5 5];
+LB2b = [0.1 0.1 1 1 1 1];
+UB2b = [0.2 0.2 13 13 13 13];
 %% 3 for Wd
 % FitnessFunction3 = @(x)MaxWd_3DoF(x, xi_ai, xi_pi, gst0, gsli0, M0b_CoM);
 % nvars3 = 7; % q2,3 tpi
@@ -48,9 +48,16 @@ UB5 = [0.3 0.3 5 5 5 5];
 FitnessFunction6 = @(x)[GlobalMinDCI1_3DoF(x, xi_ai, xi_pi, gst0, gsli0, M0b_CoM),GlobalMinDCI2_3DoF(x, xi_ai, xi_pi, gst0, gsli0, M0b_CoM)];
 ConstraintFunction6 = @(x)ConGlobalMinDCI_3DoF(x, xi_ai, xi_pi, gst0,gsli0,M0b_CoM);  
 
-nvars6 = 9; % step_a1,2,3 - tpi
-LB6 = [ 0.2 0.2 1 1 1 1 0 0 0];
-UB6 = [ 0.3 0.3 5.999 5.999 5.999 5.999 10 10 10];
+nvars6 = 9; % step_a2,3 - tpi - wi
+LB6 = [ 0.2 0.2 1 1 1 1 0.1 0.1 0.1];
+UB6 = [ 0.3 0.3 5.999 5.999 5.999 5.999 1 1 1];
+
+%% 7 for weighted Kinematic+DynamicIsotropy
+FitnessFunction7 = @(x)WeightedKinDynIsotropyInvestigation(x, xi_ai, xi_pi, gst0, gsli0, M0b_CoM, M0s_CoM);
+
+nvars7 = 6; % step_a2,3 - tpi
+LB7 = [0.1 0.1 1 1 1 1];
+UB7 = [0.3 0.3 13 13 13 13];
 %% GA calls for single anatomy
 % tic
 % options = optimoptions('ga','Generations',200,'PopulationSize',100,'Display','iter','MutationFcn',{'mutationadaptfeasible'},'StallGenLimit',20);
@@ -67,11 +74,11 @@ UB6 = [ 0.3 0.3 5.999 5.999 5.999 5.999 10 10 10];
 % [x,fval,exitflag,output] = ga(FitnessFunction1,nvars1,[],[],[],[],LB1,UB1,ConstraintFunction1,IntCon1,options);
 % toc
 %% 2+3 are local measures
-% IntCon23 = [4,5,6,7];
-% options = optimoptions('ga','Generations',100,'PopulationSize',100,'Display','iter','StallGenLimit',50,'UseParallel', true, 'UseVectorized', false);
-% tic
-% [x,fval,exitflag,output] = ga(FitnessFunction2b,nvars2,[],[],[],[],LB2b,UB2b,[],IntCon23,options);
-% toc
+IntCon23 = [3,4,5,6];
+options = optimoptions('ga','Generations',200,'PopulationSize',600,'Display','iter','FunctionTolerance',1e-6,'StallGenLimit',50,'UseParallel', true, 'UseVectorized', false);
+tic
+[x,fval,exitflag,output] = ga(FitnessFunction2b,nvars2,[],[],[],[],LB2b,UB2b,[],IntCon23,options);
+toc
 %% 4 is global measures
 % IntCon4 = [4,5,6,7];
 % options = optimoptions('ga','Generations',200,'PopulationSize',500,'Display','iter','StallGenLimit',100,'UseParallel', true, 'UseVectorized', false);
@@ -85,11 +92,17 @@ UB6 = [ 0.3 0.3 5.999 5.999 5.999 5.999 10 10 10];
 % [x,fval,exitflag,output] = ga(FitnessFunction5,nvars5,[],[],[],[],LB5,UB5,ConstraintFunction5,IntCon,options);
 % toc
 %% 6 is global measure
-IntCon6 = [4,5,6,7];
-options = optimoptions('gamultiobj','Generations',100,'PopulationSize',100,'Display','iter','StallGenLimit',25,'UseParallel', true, 'UseVectorized', false);
-tic
-[x,fval,exitflag,output] = gamultiobj(FitnessFunction6,nvars6,[],[],[],[],LB6,UB6,ConstraintFunction6,options);
-toc
+% IntCon6 = [4,5,6,7];
+% options = optimoptions('gamultiobj','Generations',100,'PopulationSize',100,'Display','iter','StallGenLimit',25,'UseParallel', true, 'UseVectorized', false);
+% tic
+% [x,fval,exitflag,output] = gamultiobj(FitnessFunction6,nvars6,[],[],[],[],LB6,UB6,ConstraintFunction6,options);
+% toc
+%% 7 is global
+% IntCon1 = [3,4,5,6];
+% options = optimoptions('ga','Generations',250,'PopulationSize',500,'Display','iter','StallGenLimit',50,'UseParallel', true, 'UseVectorized', false);
+% tic
+% [x,fval,exitflag,output] = ga(FitnessFunction7,nvars7,[],[],[],[],LB7,UB7,[],IntCon1,options);
+% toc
 %% fmincon - local minimum danger
 % x0 = [0.5 -0.5 -0.5 -0.5];
 % options = optimoptions('fmincon','UseParallel',true);

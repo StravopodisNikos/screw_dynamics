@@ -1,6 +1,6 @@
 clear;
 clc;
-close all;
+% close all;
 
 %% load libraries
 % load Murray kinematics
@@ -158,14 +158,14 @@ figure; show(robot_RAND,config_RAND,'PreservePlot',false); title('Random Anatomy
 
  tp0 = [0.5 -0.5 1 -1]';
 cnt=0; cnt2 = 0;
-for t2=-2.4:0.08:2.4
+for t2=-1.5708:0.08:1.5708
     cnt2 = cnt2+1;
     cnt3 = 0;
-    for t3=-2.4:0.08:2.4
+    for t3=-1.5708:0.08:1.5708
         cnt3=cnt3+1;
         cnt = cnt+1;
         [~,Pi] = CalculatePseudoExponentials_3DoF(xi_pi,tp0);
-        Exp_ai(:,:,1) = twistexp(xi_ai(:,1), 0);
+        Exp_ai(:,:,1) = twistexp(xi_ai(:,1), 0.5);
         Exp_ai(:,:,2) = twistexp(xi_ai(:,2), t2);
         Exp_ai(:,:,3) = twistexp(xi_ai(:,3), t3);
 %         % Jacobians
@@ -190,132 +190,82 @@ end
 %% Min DCI anatomies as extracted CallGlobalDPMsolvers/GlobalMinDCI(6)
 %% gamultiobj results are presented in:
 %  /modular_dynamixel/DynamicPerformanceEvaluation_logfiles_from_CallGlobalDPMsolvers/GDCI_1
-tp(1,:) = [-1.5708  0  -0.7854  -1.5708];     % GDCI1(1,3,2,1)
-tp(2,:) = [-1.5708  0   0.7854  -0.7854];     % GDCI2(1,3,4,2)
-tp(3,:) = [      0  0        0  -1.5708];     % GDCI3(3,3,3,1)
-tp(4,:) = [      0  0  -0.7854  -1.5708];     % GDCI4(3,3,2,1)
-tp(5,:) = [-1.5708  0   1.5708        0];     % GDCI5(1,3,5,3)
+% ===================          1           ====================
+% % % anatomies extracted from file:
+% % % DynamicPerformanceEvaluation_logfiles_from_CallGlobalDPMsolvers/GDCI_1
+% % tp(1,:) = [-1.5708  0  -0.7854  -1.5708];     % GDCI1(1,3,2,1)
+% % tp(2,:) = [-1.5708  0   0.7854  -0.7854];     % GDCI2(1,3,4,2)
+% % tp(3,:) = [      0  0        0  -1.5708];     % GDCI3(3,3,3,1)
+% % tp(4,:) = [      0  0  -0.7854  -1.5708];     % GDCI4(3,3,2,1)
+% % tp(5,:) = [-1.5708  0   1.5708        0];     % GDCI5(1,3,5,3)
+% ===================          2           ====================
+% anatomies extracted from file:
+% DynamicPerformanceEvaluation_logfiles_from_CallGlobalDPMsolvers/GDCI_2
+% here the wi extracted are: 0.869 0.13 0.001!!! for same link masses!!
+% tp(1,:) = [0  0  0  0];     % GDCI1(3,3,3,3)
+% tp(2,:) = [0.7854  0  0  0];     % GDCI2(4,3,3,3)
+% tp(3,:) = [-1.5708  0  0  0];     % GDCI3(1,3,3,3)
+% ===================          3           ====================
+% anatomies extracted from file:
+% DynamicPerformanceEvaluation_logfiles_from_CallGlobalDPMsolvers/GDCI_3
+% tp(1,:) = [-1.5708  0  0  0];     % GDCI4(1,3,3,3) wi~(0.4523,0.4472,0.1001)
+% tp(2,:) = [-1.5708  0  0.7854  0];     % GDCI5(1,3,4,3) wi~(0.44,0.44,0.11)
+% tp(3,:) = [-1.5708  0  -1.5708  0];     % GDCI6(1,3,1,3) wi~(0.4,0.48,0.11)
+% ===================          4           ====================
+% Here step_angle is 0.2618. Anatomies extracted from file:
+% DynamicPerformanceEvaluation_logfiles_from_CallGlobalDPMsolvers/GDCI_4
+% tp(1,:) = [-1.3090  0  0.2618  0];     % GDCI7(2,7,8,7) wi~(0.59,0.3,0.1)
+% tp(2,:) = [-1.3090  0  0.5236  0];     % GDCI8(2,7,9,7) wi~(0.59,0.3,0.1)
+% tp(3,:) = [-1.5708  0  0.5236  0];     % GDCI9(1,7,9,7) wi~(0.59,0.3,0.1)
+% ===================          5           ====================
+% Here step_angle is 0.2618. Anatomies extracted from file:
+% DynamicPerformanceEvaluation_logfiles_from_CallGlobalDPMsolvers/GDCI_5
+% This is anatomy that deals only with M23
+tp(1,:) = [0  1.5708  -1.5708  1.5708];     % GDCI10(7,13,1,13) wi~(0,0,1)
+tp(2,:) = [0  1.5708  -1.5708  -1.5708];    % GDCI10(7,13,1,1)  wi~(0,0,1)
+% ===================          6           ====================
+% Here step_angle is 0.2618. Anatomies extracted from file:
+% DynamicPerformanceEvaluation_logfiles_from_CallGlobalDPMsolvers/GDCI_6
+% This is anatomy that deals only with M13
+tp(1,:) = [-1.5708 0 1.5708  0];     % GDCI10(1,7,12,7) wi~(0,0,1)
 %% GDCI1
-[robot_GDCI1] = importrobot('/home/nikos/matlab_ws/modular_dynamixel/GDCI1.urdf'); 
+[robot_GDCI1] = importrobot('/home/nikos/matlab_ws/modular_dynamixel/GDCI7.urdf'); 
 config_GDCI1 = homeConfiguration(robot_GDCI1);
-figure; show(robot_GDCI1,config_GDCI1,'PreservePlot',false); title('Anatomy GDCI1 [-1.5708,0,-0.7854,-1.5708]'); hold on; axis auto; box on;
-cnt=0; cnt2 = 0;
-for t2=-2.4:0.08:2.4
-    cnt2 = cnt2+1;
-    cnt3 = 0;
-    for t3=-2.4:0.08:2.4
-        cnt3=cnt3+1;
-        cnt = cnt+1;
-        [~,Pi] = CalculatePseudoExponentials_3DoF(xi_pi,tp(1,:));
-        Exp_ai(:,:,1) = twistexp(xi_ai(:,1), 0);
-        Exp_ai(:,:,2) = twistexp(xi_ai(:,2), t2);
-        Exp_ai(:,:,3) = twistexp(xi_ai(:,3), t3);
-        % links' Jacobians
-        gsli(:,:,1) = Exp_ai(:,:,1)*gsli0(:,:,1);
-        gsli(:,:,2) = Exp_ai(:,:,1)*Pi(:,:,1)*Exp_ai(:,:,2)*gsli0(:,:,2);
-        gsli(:,:,3) = Exp_ai(:,:,1)*Pi(:,:,1)*Exp_ai(:,:,2)*Pi(:,:,2)*Exp_ai(:,:,3)*gsli0(:,:,3);
-        for i=1:3
-            [JBsli(:,:,i),JSsli(:,:,i)] = Jbody_CoM_3DoF(xi_ai, Exp_ai, Pi, gsli0, gsli, i);
-        end
-        [M_b_GDCI1ff(:,:,cnt)] = CalculateOnlyBodyMassMatrix(JBsli,M0_CoM);
-        M_b_GDCI1_12(cnt3,cnt2) = M_b_GDCI1ff(1,2,cnt);
-        M_b_GDCI1_13(cnt3,cnt2) = M_b_GDCI1ff(1,3,cnt);
-        M_b_GDCI1_23(cnt3,cnt2) = M_b_GDCI1ff(2,3,cnt);
-    end
-end
-%% GDCI2
-[robot_GDCI2] = importrobot('/home/nikos/matlab_ws/modular_dynamixel/GDCI2.urdf'); 
-config_GDCI2 = homeConfiguration(robot_GDCI2);
-figure; show(robot_GDCI2,config_GDCI2,'PreservePlot',false); title('Anatomy GDCI2 [-1.5708,0,0.7854,-0.7854]'); hold on; axis auto; box on;
-cnt=0; cnt2 = 0;
-for t2=-2.4:0.08:2.4
-    cnt2 = cnt2+1;
-    cnt3 = 0;
-    for t3=-2.4:0.08:2.4
-        cnt3=cnt3+1;
-        cnt = cnt+1;
-        [~,Pi] = CalculatePseudoExponentials_3DoF(xi_pi,tp(2,:));
-        Exp_ai(:,:,1) = twistexp(xi_ai(:,1), 0);
-        Exp_ai(:,:,2) = twistexp(xi_ai(:,2), t2);
-        Exp_ai(:,:,3) = twistexp(xi_ai(:,3), t3);
-        % links' Jacobians
-        gsli(:,:,1) = Exp_ai(:,:,1)*gsli0(:,:,1);
-        gsli(:,:,2) = Exp_ai(:,:,1)*Pi(:,:,1)*Exp_ai(:,:,2)*gsli0(:,:,2);
-        gsli(:,:,3) = Exp_ai(:,:,1)*Pi(:,:,1)*Exp_ai(:,:,2)*Pi(:,:,2)*Exp_ai(:,:,3)*gsli0(:,:,3);
-        for i=1:3
-            [JBsli(:,:,i),JSsli(:,:,i)] = Jbody_CoM_3DoF(xi_ai, Exp_ai, Pi, gsli0, gsli, i);
-        end
-        [M_b_GDCI2ff(:,:,cnt)] = CalculateOnlyBodyMassMatrix(JBsli,M0_CoM);
-        M_b_GDCI2_12(cnt3,cnt2) = M_b_GDCI2ff(1,2,cnt);
-        M_b_GDCI2_13(cnt3,cnt2) = M_b_GDCI2ff(1,3,cnt);
-        M_b_GDCI2_23(cnt3,cnt2) = M_b_GDCI2ff(2,3,cnt);
-    end
-end
-%% GDCI3
-[robot_GDCI3] = importrobot('/home/nikos/matlab_ws/modular_dynamixel/GDCI3.urdf'); 
-config_GDCI3 = homeConfiguration(robot_GDCI3);
-figure; show(robot_GDCI3,config_GDCI3,'PreservePlot',false); title('Anatomy GDCI3 [0,0,0,-1.5708]'); hold on; axis auto; box on;
-cnt=0; cnt2 = 0;
-for t2=-2.4:0.08:2.4
-    cnt2 = cnt2+1;
-    cnt3 = 0;
-    for t3=-2.4:0.08:2.4
-        cnt3=cnt3+1;
-        cnt = cnt+1;
-        [~,Pi] = CalculatePseudoExponentials_3DoF(xi_pi,tp(3,:));
-        Exp_ai(:,:,1) = twistexp(xi_ai(:,1), 0);
-        Exp_ai(:,:,2) = twistexp(xi_ai(:,2), t2);
-        Exp_ai(:,:,3) = twistexp(xi_ai(:,3), t3);
-        % links' Jacobians
-        gsli(:,:,1) = Exp_ai(:,:,1)*gsli0(:,:,1);
-        gsli(:,:,2) = Exp_ai(:,:,1)*Pi(:,:,1)*Exp_ai(:,:,2)*gsli0(:,:,2);
-        gsli(:,:,3) = Exp_ai(:,:,1)*Pi(:,:,1)*Exp_ai(:,:,2)*Pi(:,:,2)*Exp_ai(:,:,3)*gsli0(:,:,3);
-        for i=1:3
-            [JBsli(:,:,i),JSsli(:,:,i)] = Jbody_CoM_3DoF(xi_ai, Exp_ai, Pi, gsli0, gsli, i);
-        end
-        [M_b_GDCI3ff(:,:,cnt)] = CalculateOnlyBodyMassMatrix(JBsli,M0_CoM);
-        M_b_GDCI3_12(cnt3,cnt2) = M_b_GDCI3ff(1,2,cnt);
-        M_b_GDCI3_13(cnt3,cnt2) = M_b_GDCI3ff(1,3,cnt);
-        M_b_GDCI3_23(cnt3,cnt2) = M_b_GDCI3ff(2,3,cnt);
-    end
-end
-%% GDCI4
-[robot_GDCI4] = importrobot('/home/nikos/matlab_ws/modular_dynamixel/GDCI4.urdf'); 
-robot_GDCI4.DataFormat = 'column';
-config_GDCI4 = homeConfiguration(robot_GDCI4);
-figure; show(robot_GDCI4,config_GDCI4,'PreservePlot',false); title('Anatomy GDCI4 [0,0,-0.7854,-1.5708]'); hold on; axis auto; box on;
-cnt=0; cnt2 = 0;
-for t2=-2.4:0.08:2.4
-    cnt2 = cnt2+1;
-    cnt3 = 0;
-    for t3=-2.4:0.08:2.4
-        cnt3=cnt3+1;
-        cnt = cnt+1;
-        [~,Pi] = CalculatePseudoExponentials_3DoF(xi_pi,tp(4,:));
-        Exp_ai(:,:,1) = twistexp(xi_ai(:,1), 0);
-        Exp_ai(:,:,2) = twistexp(xi_ai(:,2), t2);
-        Exp_ai(:,:,3) = twistexp(xi_ai(:,3), t3);
-        % links' Jacobians
-        gsli(:,:,1) = Exp_ai(:,:,1)*gsli0(:,:,1);
-        gsli(:,:,2) = Exp_ai(:,:,1)*Pi(:,:,1)*Exp_ai(:,:,2)*gsli0(:,:,2);
-        gsli(:,:,3) = Exp_ai(:,:,1)*Pi(:,:,1)*Exp_ai(:,:,2)*Pi(:,:,2)*Exp_ai(:,:,3)*gsli0(:,:,3);
-        for i=1:3
-            [JBsli(:,:,i),JSsli(:,:,i)] = Jbody_CoM_3DoF(xi_ai, Exp_ai, Pi, gsli0, gsli, i);
-        end
-        [M_b_GDCI4ff(:,:,cnt)] = CalculateOnlyBodyMassMatrix(JBsli,M0_CoM);
-        M_b_GDCI4_12(cnt3,cnt2) = abs(M_b_GDCI4ff(1,2,cnt));
-        M_b_GDCI4_13(cnt3,cnt2) = abs(M_b_GDCI4ff(1,3,cnt));
-        M_b_GDCI4_23(cnt3,cnt2) = abs(M_b_GDCI4ff(2,3,cnt));
-    end
-end
-%% GDCI5
-[robot_GDCI5] = importrobot('/home/nikos/matlab_ws/modular_dynamixel/GDCI5.urdf'); 
-robot_GDCI5.DataFormat = 'column';
-config_GDCI5 = homeConfiguration(robot_GDCI5);
-figure; show(robot_GDCI5,config_GDCI5,'PreservePlot',false); title('Anatomy GDCI5 [-1.5708,0,1.5708,0]'); hold on; axis auto; box on;
-[~,~,gsl50,~,M50_CoM,~] = robot_links_subtree_new(robot_GDCI5,config_GDCI5,robot_DoF);
+figure; show(robot_GDCI1,config_GDCI1,'PreservePlot',false); title('Anatomy GDCI7 [-1.3090  0  0.2618  0]'); hold on; axis auto; box on;
 
-cnt=0; cnt2 = 0;
+[M_b_GDCI1_12,M_b_GDCI1_13,M_b_GDCI1_23] = BestGDCIanatomy_MmatrixOffDiagElements(xi_ai,xi_pi,tp(1,:),gsli0,M0_CoM);
+% %% GDCI2
+% [robot_GDCI2] = importrobot('/home/nikos/matlab_ws/modular_dynamixel/GDCI8.urdf'); 
+% config_GDCI2 = homeConfiguration(robot_GDCI2);
+% figure; show(robot_GDCI2,config_GDCI2,'PreservePlot',false); title('Anatomy GDCI8 [-1.3090  0  0.5236  0]'); hold on; axis auto; box on;
+% 
+% [M_b_GDCI2_12,M_b_GDCI2_13,M_b_GDCI2_23] = BestGDCIanatomy_MmatrixOffDiagElements(xi_ai,xi_pi,tp(2,:),gsli0,M0_CoM);
+% 
+% %% GDCI3
+% [robot_GDCI3] = importrobot('/home/nikos/matlab_ws/modular_dynamixel/GDCI9.urdf'); 
+% config_GDCI3 = homeConfiguration(robot_GDCI3);
+% figure; show(robot_GDCI3,config_GDCI3,'PreservePlot',false); title('Anatomy GDCI9 [-1.5708  0  0.5236  0]'); hold on; axis auto; box on;
+% 
+% [M_b_GDCI3_12,M_b_GDCI3_13,M_b_GDCI3_23] = BestGDCIanatomy_MmatrixOffDiagElements(xi_ai,xi_pi,tp(3,:),gsli0,M0_CoM);
+
+%% GDCI4
+% % [robot_GDCI4] = importrobot('/home/nikos/matlab_ws/modular_dynamixel/GDCI4.urdf'); 
+% % robot_GDCI4.DataFormat = 'column';
+% % config_GDCI4 = homeConfiguration(robot_GDCI4);
+% % figure; show(robot_GDCI4,config_GDCI4,'PreservePlot',false); title('Anatomy GDCI4 [0,0,-0.7854,-1.5708]'); hold on; axis auto; box on;
+% % 
+% % [M_b_GDCI4_12,M_b_GDCI4_13,M_b_GDCI4_23] = BestGDCIanatomy_MmatrixOffDiagElements(xi_ai,xi_pi,tp(4,:),gsli0,M0_CoM);
+
+%% GDCI5
+% % [robot_GDCI5] = importrobot('/home/nikos/matlab_ws/modular_dynamixel/GDCI5.urdf'); 
+% % robot_GDCI5.DataFormat = 'column';
+% % config_GDCI5 = homeConfiguration(robot_GDCI5);
+% % figure; show(robot_GDCI5,config_GDCI5,'PreservePlot',false); title('Anatomy GDCI5 [-1.5708,0,1.5708,0]'); hold on; axis auto; box on;
+% % [~,~,gsl50,~,M50_CoM,~] = robot_links_subtree_new(robot_GDCI5,config_GDCI5,robot_DoF);
+
+% % [M_b_GDCI5_12,M_b_GDCI5_13,M_b_GDCI5_23] = BestGDCIanatomy_MmatrixOffDiagElements(xi_ai,xi_pi,tp(5,:),gsli0,M0_CoM);
+
+
 % % [t2,t3] = meshgrid(-2.4:0.08:2.4,-2:0.08:2);
 % % % vassilis
 % %  M_b_GDCI6_12 = zeros(size(t2));
@@ -340,41 +290,19 @@ cnt=0; cnt2 = 0;
 % %     end
 % % end
 % % % end vassilis
-for t2=-2.4:0.08:2.4 %51
-    cnt2 = cnt2+1;
-    cnt3 = 0;
-    for t3=-2.4:0.08:2.4 %61
-        cnt3=cnt3+1;
-        cnt = cnt+1;
-        [~,Pi] = CalculatePseudoExponentials_3DoF(xi_pi,tp(5,:));
-        Exp_ai(:,:,1) = twistexp(xi_ai(:,1), 0);
-        Exp_ai(:,:,2) = twistexp(xi_ai(:,2), t2);
-        Exp_ai(:,:,3) = twistexp(xi_ai(:,3), t3);
-        % links' Jacobians
-        gsli(:,:,1) = Exp_ai(:,:,1)*gsli0(:,:,1);
-        gsli(:,:,2) = Exp_ai(:,:,1)*Pi(:,:,1)*Exp_ai(:,:,2)*gsli0(:,:,2);
-        gsli(:,:,3) = Exp_ai(:,:,1)*Pi(:,:,1)*Exp_ai(:,:,2)*Pi(:,:,2)*Exp_ai(:,:,3)*gsli0(:,:,3);
-        for i=1:3
-            [JBsli(:,:,i),JSsli(:,:,i)] = Jbody_CoM_3DoF(xi_ai, Exp_ai, Pi, gsli0, gsli, i);
-        end
-        [M_b_GDCI5ff(:,:,cnt)] = CalculateOnlyBodyMassMatrix(JBsli,M0_CoM);
-        M_b_GDCI5_12(cnt3,cnt2) = M_b_GDCI5ff(1,2,cnt);
-        M_b_GDCI5_13(cnt3,cnt2) = M_b_GDCI5ff(1,3,cnt);
-        M_b_GDCI5_23(cnt3,cnt2) = M_b_GDCI5ff(2,3,cnt);
-    end
-end
+
 %% Plots
-[t2f,t3f] = meshgrid(-2.4:0.08:2.4,-2.4:0.08:2.4);
-%% Random vs GDCI1
+[t2f,t3f] = meshgrid(-1.5708:0.08:1.5708,-1.5708:0.08:1.5708);
+%% Manually generate Random vs GDCI plots
 figure; % M12
-surf(t2f,t3f,M_b_GDCI4_12,'EdgeColor','flat','FaceColor','interp'); hold on; 
+surf(t2f,t3f,M_b_GDCI1_12,'EdgeColor','flat','FaceColor','interp'); hold on; 
 surf(t2f,t3f,M_b_RAND12,'EdgeColor','interp','FaceColor','texturemap','FaceAlpha',0.5); hold on;
-title('M_{12} Reference vs GDCI4'); xlabel('θ_2'); ylabel('θ_3'); zlabel('M_{12}'); colorbar;
+title('M_{12} Random vs GDCI10'); xlabel('θ_2'); ylabel('θ_3'); zlabel('M_{12}'); colorbar;
 figure; % M13
-surf(t2f,t3f,M_b_GDCI4_13,'EdgeColor','flat','FaceColor','interp'); hold on; 
+surf(t2f,t3f,M_b_GDCI1_13,'EdgeColor','flat','FaceColor','interp'); hold on; 
 surf(t2f,t3f,M_b_RAND13,'EdgeColor','interp','FaceColor','texturemap','FaceAlpha',0.5); hold on;
-title('M_{13} Reference vs GDCI4'); xlabel('θ_2'); ylabel('θ_3'); zlabel('M_{13}'); colorbar;
+title('M_{13} Random vs GDCI10'); xlabel('θ_2'); ylabel('θ_3'); zlabel('M_{13}'); colorbar;
 figure; % M23
-surf(t2f,t3f,M_b_GDCI4_23,'EdgeColor','flat','FaceColor','interp'); hold on; 
+surf(t2f,t3f,M_b_GDCI1_23,'EdgeColor','flat','FaceColor','interp'); hold on; 
 surf(t2f,t3f,M_b_RAND23,'EdgeColor','interp','FaceColor','texturemap','FaceAlpha',0.5); hold on;
-title('M_{23} Reference vs GDCI4'); xlabel('θ_2'); ylabel('θ_3'); zlabel('M_{23}'); colorbar;
+title('M_{23} Random vs GDCI10'); xlabel('θ_2'); ylabel('θ_3'); zlabel('M_{23}'); colorbar;

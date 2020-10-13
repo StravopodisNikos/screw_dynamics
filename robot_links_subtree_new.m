@@ -15,6 +15,8 @@ end
 
 bodyNames = robot.BodyNames; % save existing names of Bodies
 
+body_counter = 0; % added on 29.9.20 for extreme 1 body link cases
+
 count_rev = 0; % counter of revolute joints
 % i = 1; % counter of Bodies in initial robot object
 k = 0; % counter of Bodies in each sub robot model
@@ -76,7 +78,7 @@ for j=1:nDoF % for all links of robot
     M_CoM(:,:,j) = zeros(6); % Initialiazation of final generalized inertia matrix of each link expressed in CoM frame of link
     
         gsli0(:,:,j) = [1     0     0     CoM_robot_links(1,j);... % tf of CoM of each link to spatial frame 
-                        0     1     0     CoM_robot_links(2,j);...
+                        0     1     0     CoM_robot_links(2,j);... 
                         0     0     1     CoM_robot_links(3,j);...
                         0     0     0     1];
                 

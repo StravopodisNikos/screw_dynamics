@@ -1,4 +1,4 @@
-function [M_s,M_b, M_POE,deltaM_thetak,C_POE] = manipulator_inertia_matrix(xi_ai, exp_ai, Pi1, gsli0, Mi_b, Mi_s, Jis, Jib, theta_dot)
+function [M_b, M_POE,deltaM_thetak,C_POE] = manipulator_inertia_matrix(xi_ai, exp_ai, Pi1, gsli0, Mi_b, Jib, theta_dot)
 % Computes Manipulator Inertia Matrix based on eq.4.19 p.168 Murray
 
 % Mi is generalized Inertia matrix of i-th link expressed in link reference frame - 6x6 x2 (number of links)
@@ -6,15 +6,15 @@ function [M_s,M_b, M_POE,deltaM_thetak,C_POE] = manipulator_inertia_matrix(xi_ai
 
 % Ji is Body Jacobian of CoM - 6x2 x2
 
-n_Dof = size(Jis,2); % extract number of links
+n_Dof = size(Jib,2); % extract number of links
 
 % Computes manipulator inertia matrix based on eq.4.19 p.168 Murray
-M_s = zeros(n_Dof); % memory preallocation
+% M_s = zeros(n_Dof); % memory preallocation
 M_b = zeros(n_Dof); % memory preallocation
 
-for i = 1:n_Dof
-    M_s = M_s + Jis(:,:,i)'*Mi_s(:,:,i)*Jis(:,:,i);
-end
+% for i = 1:n_Dof
+%     M_s = M_s + Jis(:,:,i)'*Mi_s(:,:,i)*Jis(:,:,i);
+% end
 
 for i = 1:n_Dof
     M_b = M_b + Jib(:,:,i)'*Mi_b(:,:,i)*Jib(:,:,i);

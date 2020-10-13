@@ -1,7 +1,11 @@
 function [Jbsli,Jbsli_427] = Jbody_CoM_2DoF(xi_ai, exp_ai, Pi1,  gsli0, i)
 
+
 Jbsli = zeros(6,2);
 Jbsli_427 = zeros(6,2);
+
+% Jbsli = sym(zeros(6,2));
+% Jbsli_427 = sym(zeros(6,2));
 
 % Based on eq. p.168
 if i==1

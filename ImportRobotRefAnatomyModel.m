@@ -9,7 +9,7 @@ fprintf(robotname,'\n');% Print in cmd line the name of the robot file
 RefFig = figure;
 show(RefRobot);
 axis auto;
-% hold on;
+hold on;
 RefRobot.DataFormat = 'column';
 RefRobot.Gravity = [0 0 -9.80665];
 showdetails(RefRobot);

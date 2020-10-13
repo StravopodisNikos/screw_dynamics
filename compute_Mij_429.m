@@ -3,10 +3,16 @@ function [Mij_429,delta_Mij_thetak_429,Cij_429a] = compute_Mij_429(xi_ai, exp_ai
 
 % l = max(i,j);
 n_Dof = size(xi_ai,2); % extract number of links
+
 Mij_429 = zeros(2);
 Cij_429 = zeros(2);
 Cij_429a = zeros(2);
 dM2C = zeros(2);
+% for sym only
+% Mij_429 = sym(zeros(2));
+% Cij_429 = sym(zeros(2));
+% Cij_429a =sym(zeros(2));
+% dM2C = sym(zeros(2));
 
 i = n_Dof;
 j = n_Dof;
@@ -25,6 +31,10 @@ for c_i=1:i
         delta_Mij_thetak_429 = zeros(2);
         delta_Mik_thetaj_429 = zeros(2);
         delta_Mkj_thetai_429 = zeros(2);
+        % for sym
+        delta_Mij_thetak_429 = sym(zeros(2));
+        delta_Mik_thetaj_429 = sym(zeros(2));
+        delta_Mkj_thetai_429 = sym(zeros(2));
         for k=1:n_Dof
             [delta_Mij_thetak_429(:,:,k)] = compute_delta_Mij_thetak_429(xi_ai, exp_ai, Pi1, gsli0, Mi_b, k);
             if k == c_j

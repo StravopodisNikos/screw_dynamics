@@ -3,7 +3,7 @@ function [Si] = Build_SB110_forGA(Sim1,Si0,R,P,SBn,p2fig,ti,Xi1)
 % Works ONLY for 3 DoF with the predefined ruleset
 % INPUT: 1.Sim1 is the struct that contains the previous STRUCTURAL BLOCK INFO
 %        after transformed due to structure changes
-%        2.Si0 is the struct that contains the current STRUCTURAL BLOCK INFO
+%        2.Si0 is the struct that contain as the current STRUCTURAL BLOCK INFO
 %        as default in zero state
 % OUTPUT: 1. Si is struct that contains new twists and NEW zero tfs
 %        of the current STRUCTURAL BLOCK

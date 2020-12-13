@@ -12,4 +12,5 @@ cross_se3 = XIi_hat*XIj_hat - XIj_hat*XIi_hat;
 liebracket(1:3) = cross_se3(1:3,4);
 liebracket(4:6) = [cross_se3(3,2) cross_se3(1,3) cross_se3(2,1)];
 liebracket = liebracket';
+
 end
